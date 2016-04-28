@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+import yaml
 
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
 LOG = logging.getLogger("ReactOBus")
@@ -26,6 +27,21 @@ def configure_logger(log_file, level):
     LOG.addHandler(handler)
 
 
+def configure_pipeline(conffile):
+    LOG.info("Creating the pipeline")
+    with open(conffile) as f_in:
+        conf = yaml.load(f_in)
+
+    # Parse inputs
+    LOG.debug("Inputs:")
+    for i in conf["inputs"]:
+        LOG.debug("- %s (%s)", i["class"], i.get("name", ""))
+
+    LOG.debug("Outputs:")
+    for o in conf["outputs"]:
+        LOG.debug("- %s (%s)", o["class"], o.get("name", ""))
+
+
 def main():
     # Parse the command line
     parser = argparse.ArgumentParser()
@@ -40,13 +56,9 @@ def main():
 
     options = parser.parse_args()
 
-    # Configure the logger
+    # Configure everything
     configure_logger(options.log_file, options.level)
-
-    LOG.error("une erreur")
-    LOG.warning("un warning")
-    LOG.info("une info")
-    LOG.debug("une ligne de debug")
+    configure_pipeline(options.conf)
 
 
 if __name__ == '__main__':
