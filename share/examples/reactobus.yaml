@@ -11,4 +11,4 @@ outputs:
 - class: ZMQPub
   name: PrivatePub
   options:
-    url: tcp://localhost:5557
+    url: tcp://127.0.0.1:5557

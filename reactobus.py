@@ -42,14 +42,22 @@ def configure_pipeline(conffile):
     outs = []
     for i in conf["inputs"]:
         LOG.debug("- %s (%s)", i["class"], i.get("name", ""))
-        ins.append(inputs.Input.select(i["class"]))
+        ins.append(inputs.Input.select(i["class"], i.get("options", {})))
 
     LOG.debug("Outputs:")
     for o in conf["outputs"]:
         LOG.debug("- %s (%s)", o["class"], o.get("name", ""))
-        outs.append(outputs.Output.select(o["class"]))
+        outs.append(outputs.Output.select(o["class"], o.get("options", {})))
 
     return (ins, outs)
+
+
+def setup_pipeline(inputs, outputs):
+    LOG.info("Setting-up the pipeline")
+    for i in inputs:
+        i.setup()
+    for o in outputs:
+        o.setup()
 
 
 def main():
@@ -69,6 +77,9 @@ def main():
     # Configure everything
     configure_logger(options.log_file, options.level)
     (inputs, outputs) = configure_pipeline(options.conf)
+
+    # Setup and start the pipeline
+    setup_pipeline(inputs, outputs)
 
 
 if __name__ == '__main__':
