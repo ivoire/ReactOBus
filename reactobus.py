@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import itertools
 import logging
 import sys
 import yaml
@@ -52,12 +53,12 @@ def configure_pipeline(conffile):
     return (ins, outs)
 
 
-def setup_pipeline(inputs, outputs):
+def start_pipeline(inputs, outputs):
     LOG.info("Setting-up the pipeline")
     for i in inputs:
-        i.setup()
+        i.start()
     for o in outputs:
-        o.setup()
+        o.start()
 
 
 def main():
@@ -79,7 +80,14 @@ def main():
     (inputs, outputs) = configure_pipeline(options.conf)
 
     # Setup and start the pipeline
-    setup_pipeline(inputs, outputs)
+    start_pipeline(inputs, outputs)
+
+    # TODO: start the core threads
+    # TODO: handle Ctrl+C
+
+    # Wait for all threads
+    for t in itertools.chain(inputs, outputs):
+        t.join()
 
 
 if __name__ == '__main__':
