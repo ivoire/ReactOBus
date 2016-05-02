@@ -1,18 +1,37 @@
+import json
 import logging
-import threading
+import multiprocessing
+import uuid
+import zmq
+from zmq.utils.strtypes import b
 
-LOG = logging.getLogger('ReactOBus.lib.core')
+LOG = logging.getLogger("ROB.lib.core")
 
 
-class Core(threading.Thread):
-    def __init__(self, queue_in):
+class Core(multiprocessing.Process):
+    def __init__(self):
         super().__init__()
-        self.q_in = queue_in
 
     def run(self):
-        while True:
-            msg = self.q_in.get()
-            LOG.debug("New message: %s", msg)
-            # TODO: Dispatch on all listeners
+        # Create the ZMQ context
+        context = zmq.Context()
+        pull = context.socket(zmq.PULL)
+        pull.bind("ipc:///tmp/ReactOBus.inbound")
+        pub = context.socket(zmq.PUB)
+        pub.bind("ipc:///tmp/ReactOBus.outbound")
 
-            self.q_in.task_done()
+        # TODO: add a way to quit
+        i = 0
+        while True:
+            i += 1
+            msg = pull.recv_multipart()
+            LOG.debug("Receiving: %s", msg)
+
+            # Create a uniq id
+            uid = uuid.uuid1()
+
+            # Publish to all outputs
+            pub.send_multipart([msg[0], b(str(uid)), msg[1]])
+
+            if i % 1000 == 0:
+                LOG.info(i)
