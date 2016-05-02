@@ -7,6 +7,7 @@ import queue
 import sys
 import yaml
 
+from lib.core import Core
 
 
 FORMAT = "%(asctime)-15s %(levelname)s %(name)s %(message)s"
@@ -87,11 +88,14 @@ def main():
     # Setup and start the pipeline
     start_pipeline(inputs, outputs)
 
-    # TODO: start the core threads
+    # Start the core thread
+    core = Core(q_in)
+    core.start()
+
     # TODO: handle Ctrl+C
 
     # Wait for all threads
-    for t in itertools.chain(inputs, outputs):
+    for t in itertools.chain([core], inputs, outputs):
         t.join()
 
 
