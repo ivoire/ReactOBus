@@ -3,11 +3,13 @@
 import argparse
 import itertools
 import logging
+import queue
 import sys
 import yaml
 
 
-FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+
+FORMAT = "%(asctime)-15s %(levelname)s %(name)s %(message)s"
 LOG = logging.getLogger("ReactOBus")
 
 
@@ -37,20 +39,23 @@ def configure_pipeline(conffile):
     with open(conffile) as f_in:
         conf = yaml.load(f_in)
 
+    # Create the queue
+    q_in = queue.Queue()
+
     # Parse inputs
     LOG.debug("Inputs:")
     ins = []
     outs = []
     for i in conf["inputs"]:
-        LOG.debug("- %s (%s)", i["class"], i.get("name", ""))
-        ins.append(inputs.Input.select(i["class"], i.get("options", {})))
+        LOG.debug("- %s (%s)", i["class"], i["name"])
+        ins.append(inputs.Input.select(i["class"], i["name"], q_in, i.get("options", {})))
 
     LOG.debug("Outputs:")
     for o in conf["outputs"]:
         LOG.debug("- %s (%s)", o["class"], o.get("name", ""))
         outs.append(outputs.Output.select(o["class"], o.get("options", {})))
 
-    return (ins, outs)
+    return (q_in, ins, outs)
 
 
 def start_pipeline(inputs, outputs):
@@ -77,7 +82,7 @@ def main():
 
     # Configure everything
     configure_logger(options.log_file, options.level)
-    (inputs, outputs) = configure_pipeline(options.conf)
+    (q_in, inputs, outputs) = configure_pipeline(options.conf)
 
     # Setup and start the pipeline
     start_pipeline(inputs, outputs)

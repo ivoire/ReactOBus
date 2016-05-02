@@ -2,17 +2,15 @@ import logging
 import threading
 import zmq
 
-LOG = logging.getLogger("ReactOBus.lib.inputs")
-
 
 class Input(threading.Thread):
     name = ""
 
     @classmethod
-    def select(cls, classname, options):
+    def select(cls, classname, name, queue, options):
         for sub in cls.__subclasses__():
-            if sub.name == classname:
-                return sub(options)
+            if sub.classname == classname:
+                return sub(name, queue, options)
         raise NotImplementedError
 
     def setup(self):
@@ -23,17 +21,19 @@ class Input(threading.Thread):
 
 
 class ZMQPull(Input):
-    name = "ZMQPull"
+    classname = "ZMQPull"
 
-    def __init__(self, options):
+    def __init__(self, name, queue, options):
         super().__init__()
+        self.queue = queue
         self.url = options["url"]
+        self.LOG = logging.getLogger("ReactOBus.lib.inputs.%s" % name)
 
     def setup(self):
-        LOG.debug("Setting up %s", self.name)
+        self.LOG.debug("Setting up %s", self.name)
         self.context = zmq.Context()
         self.sock = self.context.socket(zmq.PULL)
-        LOG.debug("Listening on %s", self.url)
+        self.LOG.debug("Listening on %s", self.url)
         self.sock.bind(self.url)
 
     def run(self):
