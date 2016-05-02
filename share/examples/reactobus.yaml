@@ -1,8 +1,12 @@
 inputs:
 - class: ZMQPull
-  name: PullRelay
+  name: PublicIn
   options:
-    url: tcp://*:5555
+    url: tcp://*:5554
+- class: ZMQPull
+  name: PrivateIn
+  options:
+    url: tcp://127.0.0.1:5555
 outputs:
 - class: ZMQPub
   name: PublicPub
