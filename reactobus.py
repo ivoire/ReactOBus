@@ -11,7 +11,7 @@ from lib.core import Core
 
 
 FORMAT = "%(asctime)-15s %(levelname)s %(name)s %(message)s"
-LOG = logging.getLogger("ReactOBus")
+LOG = logging.getLogger("ROB")
 
 
 def configure_logger(log_file, level):
@@ -40,23 +40,20 @@ def configure_pipeline(conffile):
     with open(conffile) as f_in:
         conf = yaml.load(f_in)
 
-    # Create the queue
-    q_in = queue.Queue()
-
     # Parse inputs
     LOG.debug("Inputs:")
     ins = []
     outs = []
     for i in conf["inputs"]:
         LOG.debug("- %s (%s)", i["class"], i["name"])
-        ins.append(inputs.Input.select(i["class"], i["name"], q_in, i.get("options", {})))
+        ins.append(inputs.Input.select(i["class"], i["name"], i.get("options", {})))
 
     LOG.debug("Outputs:")
     for o in conf["outputs"]:
-        LOG.debug("- %s (%s)", o["class"], o.get("name", ""))
-        outs.append(outputs.Output.select(o["class"], o.get("options", {})))
+        LOG.debug("- %s (%s)", o["class"], o["name"])
+        outs.append(outputs.Output.select(o["class"], o["name"], o.get("options", {})))
 
-    return (q_in, ins, outs)
+    return (ins, outs)
 
 
 def start_pipeline(inputs, outputs):
@@ -83,13 +80,13 @@ def main():
 
     # Configure everything
     configure_logger(options.log_file, options.level)
-    (q_in, inputs, outputs) = configure_pipeline(options.conf)
+    (inputs, outputs) = configure_pipeline(options.conf)
 
     # Setup and start the pipeline
     start_pipeline(inputs, outputs)
 
     # Start the core thread
-    core = Core(q_in)
+    core = Core()
     core.start()
 
     # TODO: handle Ctrl+C
