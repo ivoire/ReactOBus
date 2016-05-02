@@ -38,10 +38,23 @@ class ZMQPull(Input):
 
     def run(self):
         self.setup()
+        # TODO: add a way to do a clean quit
         while True:
-            pass
+            msg = self.sock.recv_multipart()
+            # TODO: use a pipeline to transform the messages
+            try:
+                topic = msg[0]
+                data = {}
+                for (k, v) in zip(msg[1::2], msg[2::2]):
+                    data[k] = v
+            except IndexError:
+                self.LOG.error("Droping invalid message")
+                self.LOG.debug("=> %s", msg)
+                continue
+            self.LOG.debug("topic: %s, data: %s", topic, data)
+            self.queue.put((topic, data))
 
     def __del__(self):
-        # TODO: is it really useful to drop all messages
+        # TODO: is it really useful to drop all messages?
         self.sock.close(linger=0)
         self.context.term()
