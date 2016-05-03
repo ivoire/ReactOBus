@@ -3,7 +3,7 @@
 import argparse
 import itertools
 import logging
-import queue
+import signal
 import sys
 import yaml
 
@@ -58,10 +58,25 @@ def configure_pipeline(conffile):
 
 def start_pipeline(inputs, outputs):
     LOG.info("Setting-up the pipeline")
+    # Ignore the signals in the sub-processes. The main process will take care
+    # of the propagation
+
+    default_handler = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    # Start the core
+    core = Core()
+    core.start()
+
+    # Start the stages
     for i in inputs:
         i.start()
     for o in outputs:
         o.start()
+
+    # Restaure the default signal handler
+    signal.signal(signal.SIGINT, default_handler)
+    return (inputs, core, outputs)
 
 
 def main():
@@ -83,16 +98,19 @@ def main():
     (inputs, outputs) = configure_pipeline(options.conf)
 
     # Setup and start the pipeline
-    start_pipeline(inputs, outputs)
+    (inputs, core, outputs) = start_pipeline(inputs, outputs)
 
-    # Start the core thread
-    core = Core()
-    core.start()
+    # Wait for a signal and then quit
+    try:
+        signal.pause()
+    except KeyboardInterrupt:
+        pass
 
-    # TODO: handle Ctrl+C
+    LOG.info("Signal received, leaving")
 
     # Wait for all threads
     for t in itertools.chain([core], inputs, outputs):
+        t.terminate()
         t.join()
 
 

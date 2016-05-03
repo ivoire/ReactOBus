@@ -20,7 +20,6 @@ class Core(multiprocessing.Process):
         self.pub = self.context.socket(zmq.PUB)
         self.pub.bind("ipc:///tmp/ReactOBus.outbound")
 
-        # TODO: add a way to quit
         while True:
             msg = self.pull.recv_multipart()
             LOG.debug("Receiving: %s", msg)

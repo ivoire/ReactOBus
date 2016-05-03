@@ -42,7 +42,6 @@ class ZMQPull(Input):
 
     def run(self):
         self.setup()
-        # TODO: add a way to do a clean quit
         while True:
             msg = self.sock.recv_multipart()
             # TODO: use a pipeline to transform the messages
