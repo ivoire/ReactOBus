@@ -25,7 +25,7 @@ class Input(multiprocessing.Process):
 class ZMQPull(Input):
     classname = "ZMQPull"
 
-    def __init__(self, name,  options, inbound):
+    def __init__(self, name, options, inbound):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
