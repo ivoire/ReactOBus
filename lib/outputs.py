@@ -35,12 +35,14 @@ class ZMQPub(Output):
         self.LOG.debug("Listening on %s", self.url)
         self.sock.bind(self.url)
 
+        self.sub = self.context.socket(zmq.SUB)
+        self.sub.setsockopt(zmq.SUBSCRIBE, b"")
+        self.sub.connect("ipc:///tmp/ReactOBus.outbound")
+
     def run(self):
         self.setup()
-        #while True:
-        #    pass
-
-    def __del__(self):
-        # TODO: is it really useful to drop all messages
-        self.sock.close(linger=0)
-        self.context.term()
+        # TODO: this is a dummy class.
+        while True:
+            msg = self.sub.recv_multipart()
+            self.LOG.debug(msg)
+            self.sock.send_multipart(msg)
