@@ -57,8 +57,3 @@ class ZMQPull(Input):
                 continue
             self.LOG.debug("topic: %s, data: %s", u(topic), data)
             self.push.send_multipart([topic, b(json.dumps(data))])
-
-    def __del__(self):
-        # TODO: is it really useful to drop all messages?
-        self.sock.close(linger=0)
-        self.context.term()
