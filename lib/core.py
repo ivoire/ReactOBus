@@ -14,24 +14,20 @@ class Core(multiprocessing.Process):
 
     def run(self):
         # Create the ZMQ context
-        context = zmq.Context()
-        pull = context.socket(zmq.PULL)
-        pull.bind("ipc:///tmp/ReactOBus.inbound")
-        pub = context.socket(zmq.PUB)
-        pub.bind("ipc:///tmp/ReactOBus.outbound")
+        self.context = zmq.Context()
+        self.pull = self.context.socket(zmq.PULL)
+        self.pull.bind("ipc:///tmp/ReactOBus.inbound")
+        self.pub = self.context.socket(zmq.PUB)
+        self.pub.bind("ipc:///tmp/ReactOBus.outbound")
 
         # TODO: add a way to quit
-        i = 0
         while True:
-            i += 1
-            msg = pull.recv_multipart()
+            msg = self.pull.recv_multipart()
             LOG.debug("Receiving: %s", msg)
 
-            # Create a uniq id
+            # Add an UUID
             uid = uuid.uuid1()
+            new_msg = [msg[0], b(str(uid)), msg[1]]
 
             # Publish to all outputs
-            pub.send_multipart([msg[0], b(str(uid)), msg[1]])
-
-            if i % 1000 == 0:
-                LOG.info(i)
+            self.pub.send_multipart(new_msg)
