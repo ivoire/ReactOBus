@@ -46,17 +46,23 @@ def configure_pipeline(conffile):
     outs = []
     for i in conf["inputs"]:
         LOG.debug("- %s (%s)", i["class"], i["name"])
-        ins.append(inputs.Input.select(i["class"], i["name"], i.get("options", {})))
+        new_in = inputs.Input.select(i["class"], i["name"],
+                                     i.get("options", {}),
+                                     conf["core"]["inbound"])
+        ins.append(new_in)
 
     LOG.debug("Outputs:")
     for o in conf["outputs"]:
         LOG.debug("- %s (%s)", o["class"], o["name"])
-        outs.append(outputs.Output.select(o["class"], o["name"], o.get("options", {})))
+        new_out = outputs.Output.select(o["class"], o["name"],
+                                        o.get("options", {}),
+                                        conf["core"]["outbound"])
+        outs.append(new_out)
 
-    return (ins, outs)
+    return (ins, Core(conf["core"]["inbound"], conf["core"]["outbound"]), outs)
 
 
-def start_pipeline(inputs, outputs):
+def start_pipeline(inputs, core, outputs):
     LOG.info("Setting-up the pipeline")
     # Ignore the signals in the sub-processes. The main process will take care
     # of the propagation
@@ -65,7 +71,6 @@ def start_pipeline(inputs, outputs):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     # Start the core
-    core = Core()
     core.start()
 
     # Start the stages
@@ -76,7 +81,6 @@ def start_pipeline(inputs, outputs):
 
     # Restaure the default signal handler
     signal.signal(signal.SIGINT, default_handler)
-    return (inputs, core, outputs)
 
 
 def main():
@@ -95,10 +99,10 @@ def main():
 
     # Configure everything
     configure_logger(options.log_file, options.level)
-    (inputs, outputs) = configure_pipeline(options.conf)
+    (inputs, core, outputs) = configure_pipeline(options.conf)
 
     # Setup and start the pipeline
-    (inputs, core, outputs) = start_pipeline(inputs, outputs)
+    start_pipeline(inputs, core, outputs)
 
     # Wait for a signal and then quit
     try:

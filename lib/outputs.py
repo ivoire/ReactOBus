@@ -7,10 +7,10 @@ class Output(multiprocessing.Process):
     classname = ""
 
     @classmethod
-    def select(cls, classname, name, options):
+    def select(cls, classname, name, options, outbound):
         for sub in cls.__subclasses__():
             if sub.classname == classname:
-                return sub(name, options)
+                return sub(name, options, outbound)
         raise NotImplementedError
 
     def setup(self):
@@ -23,10 +23,11 @@ class Output(multiprocessing.Process):
 class ZMQPub(Output):
     classname = "ZMQPub"
 
-    def __init__(self, name, options):
+    def __init__(self, name, options, outbound):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.output.%s" % name)
+        self.outbound = outbound
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
@@ -37,7 +38,7 @@ class ZMQPub(Output):
 
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
-        self.sub.connect("ipc:///tmp/ReactOBus.outbound")
+        self.sub.connect(self.outbound)
 
     def run(self):
         self.setup()

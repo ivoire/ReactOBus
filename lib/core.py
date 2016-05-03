@@ -9,16 +9,18 @@ LOG = logging.getLogger("ROB.lib.core")
 
 
 class Core(multiprocessing.Process):
-    def __init__(self):
+    def __init__(self, inbound, outbound):
         super().__init__()
+        self.inbound = inbound
+        self.outbound = outbound
 
     def run(self):
         # Create the ZMQ context
         self.context = zmq.Context()
         self.pull = self.context.socket(zmq.PULL)
-        self.pull.bind("ipc:///tmp/ReactOBus.inbound")
+        self.pull.bind(self.inbound)
         self.pub = self.context.socket(zmq.PUB)
-        self.pub.bind("ipc:///tmp/ReactOBus.outbound")
+        self.pub.bind(self.outbound)
 
         while True:
             msg = self.pull.recv_multipart()
