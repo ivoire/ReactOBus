@@ -67,7 +67,7 @@ def configure_pipeline(conffile):
 
 
 def start_pipeline(inputs, core, reactor, outputs):
-    LOG.info("Setting-up the pipeline")
+    LOG.info("Starting the pipeline")
     # Ignore the signals in the sub-processes. The main process will take care
     # of the propagation
 
@@ -111,6 +111,7 @@ def main():
     start_pipeline(inputs, core, reactor, outputs)
 
     # Wait for a signal and then quit
+    LOG.info("Waiting for a signal")
     try:
         signal.pause()
     except KeyboardInterrupt:
@@ -122,6 +123,8 @@ def main():
     for t in itertools.chain([core, reactor], inputs, outputs):
         t.terminate()
         t.join()
+
+    LOG.info("Leaving")
 
 
 if __name__ == '__main__':
