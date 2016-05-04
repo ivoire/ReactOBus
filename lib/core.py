@@ -23,7 +23,7 @@ class Core(multiprocessing.Process):
 
         while True:
             msg = self.pull.recv_multipart()
-            LOG.debug("Receiving: %s", msg)
+            LOG.debug(msg)
 
             # Add an UUID
             uid = uuid.uuid1()
