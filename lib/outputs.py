@@ -32,9 +32,9 @@ class ZMQPub(Output):
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
         self.context = zmq.Context()
-        self.sock = self.context.socket(zmq.PUB)
+        self.pub = self.context.socket(zmq.PUB)
         self.LOG.debug("Listening on %s", self.url)
-        self.sock.bind(self.url)
+        self.pub.bind(self.url)
 
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
@@ -46,4 +46,4 @@ class ZMQPub(Output):
         while True:
             msg = self.sub.recv_multipart()
             self.LOG.debug(msg)
-            self.sock.send_multipart(msg)
+            self.pub.send_multipart(msg)
