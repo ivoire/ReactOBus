@@ -12,6 +12,20 @@ core:
   inbound: ipc:///tmp/ReactOBus.inbound
   outbound: ipc:///tmp/ReactOBus.outbound
 
+reactor:
+  workers: 10   # Not used for the moment
+  rules:
+  - name: org.reactobus
+    match:
+      field: topic
+      pattern: ^org\.reactobus\.
+    exec:
+      path: share/examples/react.sh
+      timeout: 2
+      args:
+      - topic
+      - $topic
+
 outputs:
 - class: ZMQPub
   name: PublicPub

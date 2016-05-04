@@ -8,6 +8,7 @@ import sys
 import yaml
 
 from lib.core import Core
+from lib.reactor import Reactor
 
 
 FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
@@ -59,10 +60,13 @@ def configure_pipeline(conffile):
                                         conf["core"]["outbound"])
         outs.append(new_out)
 
-    return (ins, Core(conf["core"]["inbound"], conf["core"]["outbound"]), outs)
+    core = Core(conf["core"]["inbound"], conf["core"]["outbound"])
+    reactor = Reactor(conf["reactor"], conf["core"]["outbound"])
+
+    return (ins, core, reactor, outs)
 
 
-def start_pipeline(inputs, core, outputs):
+def start_pipeline(inputs, core, reactor, outputs):
     LOG.info("Setting-up the pipeline")
     # Ignore the signals in the sub-processes. The main process will take care
     # of the propagation
@@ -72,6 +76,7 @@ def start_pipeline(inputs, core, outputs):
 
     # Start the core
     core.start()
+    reactor.start()
 
     # Start the stages
     for i in inputs:
@@ -86,7 +91,7 @@ def start_pipeline(inputs, core, outputs):
 def main():
     # Parse the command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--conf", default="/etc/reactobus.yaml",
+    parser.add_argument("-c", "--config", default="/etc/reactobus.yaml",
                         help="ReactOBus configuration")
     loggrp = parser.add_argument_group('Logging')
     loggrp.add_argument("-l", "--level", default="INFO", type=str,
@@ -99,10 +104,11 @@ def main():
 
     # Configure everything
     configure_logger(options.log_file, options.level)
-    (inputs, core, outputs) = configure_pipeline(options.conf)
+    # TODO: This should ot be a tuple like this
+    (inputs, core, reactor, outputs) = configure_pipeline(options.config)
 
     # Setup and start the pipeline
-    start_pipeline(inputs, core, outputs)
+    start_pipeline(inputs, core, reactor, outputs)
 
     # Wait for a signal and then quit
     try:
@@ -113,7 +119,7 @@ def main():
     LOG.info("Signal received, leaving")
 
     # Wait for all threads
-    for t in itertools.chain([core], inputs, outputs):
+    for t in itertools.chain([core, reactor], inputs, outputs):
         t.terminate()
         t.join()
 
