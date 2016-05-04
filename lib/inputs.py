@@ -5,25 +5,31 @@ from zmq.utils.strtypes import b, u
 
 from .utils import Pipe
 
+
 class Input(Pipe):
     pass
 
 
-class ZMQPull(Input):
-    classname = "ZMQPull"
-
-    def __init__(self, name, options, inbound):
+class ZMQ(Input):
+    def __init__(self, name, options, inbound, pull):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
         self.inbound = inbound
+        self.pull = pull
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
         self.context = zmq.Context()
-        self.sock = self.context.socket(zmq.PULL)
-        self.LOG.debug("Listening on %s", self.url)
-        self.sock.bind(self.url)
+        if self.pull:
+            self.sock = self.context.socket(zmq.PULL)
+            self.LOG.debug("Listening on %s", self.url)
+            self.sock.bind(self.url)
+        else:
+            self.sock = self.context.socket(zmq.SUB)
+            self.LOG.debug("Connecting to %s", self.url)
+            self.sock.connect(self.url)
+
         self.LOG.debug("Connecting to inbound")
         self.push = self.context.socket(zmq.PUSH)
         self.push.connect(self.inbound)
@@ -44,3 +50,17 @@ class ZMQPull(Input):
                 continue
             self.LOG.debug("topic: %s, data: %s", u(topic), data)
             self.push.send_multipart([topic, b(json.dumps(data))])
+
+
+class ZMQPull(ZMQ):
+    classname = "ZMQPull"
+
+    def __init__(self, name, options, inbound):
+        super().__init__(name, options, inbound, pull=True)
+
+
+class ZMQSub(ZMQ):
+    classname = "ZMQSub"
+
+    def __init__(self, name, options, inbound):
+        super().__init__(name, options, inbound, pull=False)
