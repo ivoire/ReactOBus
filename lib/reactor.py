@@ -34,7 +34,8 @@ class Matcher(object):
 
         LOG.debug("Running: %s", args)
         try:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=self.timeout)
+            out = subprocess.check_output(args, stderr=subprocess.STDOUT,
+                                          timeout=self.timeout)
         except OSError as err:
             LOG.error("Unable to run %s (%s)", args, err)
         except subprocess.TimeoutExpired:
@@ -68,8 +69,8 @@ class Reactor(multiprocessing.Process):
             msg = self.sub.recv_multipart()
             try:
                 topic = u(msg[0])
-                uuid  = u(msg[1])
-                data  = u(msg[2])
+                uuid = u(msg[1])
+                data = u(msg[2])
             except IndexError:
                 LOG.error("Invalid message: %s", msg)
                 continue
