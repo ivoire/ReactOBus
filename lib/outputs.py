@@ -1,23 +1,11 @@
 import logging
-import multiprocessing
 import zmq
 
+from .utils import Pipe
 
-class Output(multiprocessing.Process):
-    classname = ""
 
-    @classmethod
-    def select(cls, classname, name, options, outbound):
-        for sub in cls.__subclasses__():
-            if sub.classname == classname:
-                return sub(name, options, outbound)
-        raise NotImplementedError
-
-    def setup(self):
-        raise NotImplementedError
-
-    def run(self):
-        raise NotImplementedError
+class Output(Pipe):
+    pass
 
 
 class ZMQPub(Output):

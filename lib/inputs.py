@@ -1,25 +1,12 @@
 import json
 import logging
-import multiprocessing
 import zmq
 from zmq.utils.strtypes import b, u
 
+from .utils import Pipe
 
-class Input(multiprocessing.Process):
-    classname = ""
-
-    @classmethod
-    def select(cls, classname, name, options, inbound):
-        for sub in cls.__subclasses__():
-            if sub.classname == classname:
-                return sub(name, options, inbound)
-        raise NotImplementedError
-
-    def setup(self):
-        raise NotImplementedError
-
-    def run(self):
-        raise NotImplementedError
+class Input(Pipe):
+    pass
 
 
 class ZMQPull(Input):
