@@ -53,17 +53,18 @@ def configure_pipeline(conffile):
         ins.append(new_in)
 
     LOG.debug("Outputs:")
-    for o in conf["outputs"]:
+    for o in conf.get("outputs", []):
         LOG.debug("- %s (%s)", o["class"], o["name"])
         new_out = outputs.Output.select(o["class"], o["name"],
                                         o.get("options", {}),
                                         conf["core"]["outbound"])
         outs.append(new_out)
 
-    core = Core(conf["core"]["inbound"], conf["core"]["outbound"])
-    reactor = Reactor(conf["reactor"], conf["core"]["outbound"])
+    core = [Core(conf["core"]["inbound"], conf["core"]["outbound"])]
+    if conf.get("reactor", None) is not None:
+        core.append(Reactor(conf["reactor"], conf["core"]["outbound"]))
 
-    return ([core, reactor], ins, outs)
+    return (core, ins, outs)
 
 
 def start_pipeline(stages):
