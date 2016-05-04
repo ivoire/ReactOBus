@@ -1,10 +1,10 @@
 inputs:
 - class: ZMQPull
-  name: PublicIn
+  name: PullIn
   options:
     url: tcp://*:5554
-- class: ZMQPull
-  name: PrivateIn
+- class: ZMQSub
+  name: SubIn
   options:
     url: tcp://127.0.0.1:5555
 
