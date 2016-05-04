@@ -63,10 +63,10 @@ def configure_pipeline(conffile):
     core = Core(conf["core"]["inbound"], conf["core"]["outbound"])
     reactor = Reactor(conf["reactor"], conf["core"]["outbound"])
 
-    return (ins, core, reactor, outs)
+    return ([core, reactor], ins, outs)
 
 
-def start_pipeline(inputs, core, reactor, outputs):
+def start_pipeline(stages):
     LOG.info("Starting the pipeline")
     # Ignore the signals in the sub-processes. The main process will take care
     # of the propagation
@@ -74,15 +74,9 @@ def start_pipeline(inputs, core, reactor, outputs):
     default_handler = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    # Start the core
-    core.start()
-    reactor.start()
-
     # Start the stages
-    for i in inputs:
-        i.start()
-    for o in outputs:
-        o.start()
+    for stage in itertools.chain(*stages):
+        stage.start()
 
     # Restaure the default signal handler
     signal.signal(signal.SIGINT, default_handler)
@@ -104,11 +98,10 @@ def main():
 
     # Configure everything
     configure_logger(options.log_file, options.level)
-    # TODO: This should ot be a tuple like this
-    (inputs, core, reactor, outputs) = configure_pipeline(options.config)
+    stages = configure_pipeline(options.config)
 
     # Setup and start the pipeline
-    start_pipeline(inputs, core, reactor, outputs)
+    start_pipeline(stages)
 
     # Wait for a signal and then quit
     LOG.info("Waiting for a signal")
@@ -120,7 +113,7 @@ def main():
     LOG.info("Signal received, leaving")
 
     # Wait for all threads
-    for t in itertools.chain([core, reactor], inputs, outputs):
+    for t in itertools.chain(*stages):
         t.terminate()
         t.join()
 
