@@ -11,22 +11,20 @@ class Input(Pipe):
 
 
 class ZMQ(Input):
-    def __init__(self, name, options, inbound, pull):
+    def __init__(self, name, options, inbound):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
         self.inbound = inbound
-        self.pull = pull
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
         self.context = zmq.Context()
-        if self.pull:
-            self.sock = self.context.socket(zmq.PULL)
+        self.sock = self.context.socket(self.socket_type)
+        if self.socket_type == zmq.PULL:
             self.LOG.debug("Listening on %s", self.url)
             self.sock.bind(self.url)
         else:
-            self.sock = self.context.socket(zmq.SUB)
             self.LOG.debug("Connecting to %s", self.url)
             self.sock.connect(self.url)
 
@@ -56,11 +54,13 @@ class ZMQPull(ZMQ):
     classname = "ZMQPull"
 
     def __init__(self, name, options, inbound):
-        super().__init__(name, options, inbound, pull=True)
+        super().__init__(name, options, inbound)
+        self.socket_type = zmq.PULL
 
 
 class ZMQSub(ZMQ):
     classname = "ZMQSub"
 
     def __init__(self, name, options, inbound):
-        super().__init__(name, options, inbound, pull=False)
+        super().__init__(name, options, inbound)
+        self.socket_type = zmq.SUB
