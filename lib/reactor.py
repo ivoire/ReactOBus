@@ -68,9 +68,7 @@ class Reactor(multiprocessing.Process):
         while True:
             msg = self.sub.recv_multipart()
             try:
-                topic = u(msg[0])
-                uuid = u(msg[1])
-                data = u(msg[2])
+                (topic, uuid, data) = map(u, msg)
             except IndexError:
                 LOG.error("Invalid message: %s", msg)
                 continue
