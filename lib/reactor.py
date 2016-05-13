@@ -2,8 +2,9 @@ import logging
 import multiprocessing
 import re
 import subprocess
+import threading
 import zmq
-from zmq.utils.strtypes import u
+from zmq.utils.strtypes import b, u
 
 LOG = logging.getLogger("ROB.lib.reactor")
 
@@ -44,24 +45,54 @@ class Matcher(object):
             LOG.debug("=> %s", out)
 
 
+class Worker(threading.Thread):
+    def __init__(self, matchers):
+        super().__init__()
+        self.matchers = matchers
+
+    def run(self):
+        self.context = zmq.Context.instance()
+        self.sock = self.context.socket(zmq.DEALER)
+        self.sock.connect("inproc://workers")
+        while True:
+            msg = self.sock.recv_multipart()
+            matcher_index = int(msg[0])
+            (topic, uuid, data) = msg[1:]
+            LOG.debug("Running matcher n°%d on %s", matcher_index, self.name)
+            self.matchers[matcher_index].run(topic, uuid, data)
+
+
 class Reactor(multiprocessing.Process):
     def __init__(self, options, outbound):
         super().__init__()
         self.options = options
         self.matchers = []
         self.outbound = outbound
+        self.workers = []
 
     def setup(self):
         # Connect to the stream
-        self.context = zmq.Context()
+        self.context = zmq.Context.instance()
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
+        LOG.debug("Connecting to outbound (%s)", self.outbound)
         self.sub.connect(self.outbound)
 
         # Loop on all rules
         for rule in self.options["rules"]:
             m = Matcher(rule)
             self.matchers.append(m)
+
+        # Create the workers
+        self.ctrl = self.context.socket(zmq.DEALER)
+        self.ctrl.bind("inproc://workers")
+
+        LOG.debug("Starting %d workers", self.options["workers"])
+        for _ in range(0, self.options["workers"]):
+            w = Worker(self.matchers)
+            w.start()
+            self.workers.append(w)
+
 
     def run(self):
         self.setup()
@@ -73,7 +104,7 @@ class Reactor(multiprocessing.Process):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
-            for m in self.matchers:
+            for (i, m) in enumerate(self.matchers):
                 if m.match(topic, uuid, data):
                     LOG.debug("%s matching %s", msg, m.name)
-                    m.run(topic, uuid, data)
+                    self.ctrl.send_multipart([b(str(i)), b(topic), b(uuid), b(data)])
