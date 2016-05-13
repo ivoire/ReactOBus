@@ -15,10 +15,13 @@ class Core(multiprocessing.Process):
 
     def run(self):
         # Create the ZMQ context
-        self.context = zmq.Context()
+        self.context = zmq.Context.instance()
         self.pull = self.context.socket(zmq.PULL)
         self.pull.bind(self.inbound)
         self.pub = self.context.socket(zmq.PUB)
+        # Set 0 limit on input and output HWM
+        self.pub.setsockopt(zmq.SNDHWM, 0)
+        LOG.debug("Binding outbound (%s)", self.outbound)
         self.pub.bind(self.outbound)
 
         while True:
