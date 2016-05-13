@@ -19,7 +19,7 @@ class ZMQPub(Output):
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
-        self.context = zmq.Context()
+        self.context = zmq.Context.instance()
         self.pub = self.context.socket(zmq.PUB)
         self.LOG.debug("Listening on %s", self.url)
         self.pub.bind(self.url)

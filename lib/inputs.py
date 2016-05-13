@@ -19,7 +19,7 @@ class ZMQ(Input):
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
-        self.context = zmq.Context()
+        self.context = zmq.Context.instance()
         self.sock = self.context.socket(self.socket_type)
         if self.socket_type == zmq.PULL:
             self.LOG.debug("Listening on %s", self.url)
