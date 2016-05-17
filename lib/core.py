@@ -1,3 +1,4 @@
+import datetime
 import logging
 import multiprocessing
 import uuid
@@ -28,9 +29,12 @@ class Core(multiprocessing.Process):
             msg = self.pull.recv_multipart()
             LOG.debug(msg)
 
-            # Add an UUID
-            uid = uuid.uuid1()
-            new_msg = [msg[0], b(str(uid)), msg[1]]
+            # Add a datetime
+            # The format is [topic, uuid, datetime, data as json]
+            new_msg = [msg[0],
+                       msg[1],
+                       b(datetime.datetime.utcnow().isoformat()),
+                       msg[2]]
 
             # Publish to all outputs
             self.pub.send_multipart(new_msg)

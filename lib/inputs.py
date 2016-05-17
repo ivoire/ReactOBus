@@ -39,15 +39,14 @@ class ZMQ(Input):
             # TODO: use a pipeline to transform the messages
             try:
                 topic = msg[0]
-                data = {}
-                for (k, v) in zip(msg[1::2], msg[2::2]):
-                    data[u(k)] = u(v)
+                uuid = msg[1]
+                data = msg[2]
             except IndexError:
                 self.LOG.error("Droping invalid message")
                 self.LOG.debug("=> %s", msg)
                 continue
             self.LOG.debug("topic: %s, data: %s", u(topic), data)
-            self.push.send_multipart([topic, b(json.dumps(data))])
+            self.push.send_multipart([topic, uuid, data])
 
 
 class ZMQPull(ZMQ):

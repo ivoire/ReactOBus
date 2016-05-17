@@ -99,12 +99,16 @@ class Reactor(multiprocessing.Process):
         while True:
             msg = self.sub.recv_multipart()
             try:
-                (topic, uuid, data) = (u(m) for m in msg)
-            except IndexError:
+                (topic, uuid, dt, data) = (u(m) for m in msg)
+            except (IndexError, ValueError):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
             for (i, m) in enumerate(self.matchers):
                 if m.match(topic, uuid, data):
                     LOG.debug("%s matching %s", msg, m.name)
-                    self.ctrl.send_multipart([b(str(i)), b(topic), b(uuid), b(data)])
+                    self.ctrl.send_multipart([b(str(i)),
+                                              b(topic),
+                                              b(uuid),
+                                              b(dt),
+                                              b(data)])
