@@ -1,4 +1,6 @@
+import json
 import sys
+import uuid
 import zmq
 from zmq.utils.strtypes import b
 
@@ -18,7 +20,9 @@ def main():
     sock.connect(url)
 
     for i in range(0, num_messages):
-        sock.send_multipart([b(topic), b("id"), b(str(i))])
+        sock.send_multipart([b(topic),
+                             b(str(uuid.uuid1())),
+                             b(json.dumps({'id': i}))])
 
 
 if __name__ == "__main__":
