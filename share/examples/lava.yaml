@@ -1,0 +1,15 @@
+inputs:
+- class: ZMQPull
+  name: LAVA-in
+  options:
+    url: tcp://127.0.0.1:5500
+
+core:
+  inbound: ipc:///tmp/ReactOBus.lava.inbound
+  outbound: ipc:///tmp/ReactOBus.lava.outbound
+
+outputs:
+- class: ZMQPub
+  name: LAVA-out
+  options:
+    url: tcp://*:5501
