@@ -1,4 +1,6 @@
 import json
+import os
+import pwd
 import sys
 import uuid
 import zmq
@@ -13,6 +15,7 @@ def main():
     url = sys.argv[1]
     topic = sys.argv[2]
     num_messages = int(sys.argv[3])
+    username = pwd.getpwuid(os.geteuid()).pw_name
 
     # Create the socket
     context = zmq.Context()
@@ -22,6 +25,7 @@ def main():
     for i in range(0, num_messages):
         sock.send_multipart([b(topic),
                              b(str(uuid.uuid1())),
+                             b(username),
                              b(json.dumps({'id': i}))])
 
 
