@@ -1,5 +1,5 @@
 inputs:
-- class: ZMQPull
+- class: ZMQSub
   name: LAVA-in
   options:
     url: tcp://127.0.0.1:5500
