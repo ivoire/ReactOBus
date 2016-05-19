@@ -18,17 +18,18 @@ class Matcher(object):
         self.timeout = rule["exec"]["timeout"]
         self.args = rule["exec"]["args"]
 
-    def match(self, topic, uuid, data):
-        if self.field == "topic":
-            return self.pattern.match(topic) is not None
-        else:
-            return self.pattern.match(uuid) is not None
+    def match(self, variables):
+        return self.pattern.match(variables[self.field]) is not None
 
-    def run(self, topic, uuid, data):
-        variables = {"topic": topic, "uuid": uuid}
+    def run(self, topic, uuid, datetime, username, data):
+        variables = {"topic": topic,
+                     "uuid": uuid,
+                     "datetime": datetime,
+                     "username": username}
         args = [self.bin]
         for arg in self.args:
             if arg[0] == '$':
+                # TODO: check for errors
                 args.append(variables[arg[1:]])
             else:
                 args.append(arg)
@@ -57,9 +58,9 @@ class Worker(threading.Thread):
         while True:
             msg = self.sock.recv_multipart()
             matcher_index = int(msg[0])
-            (topic, uuid, data) = msg[1:]
+            (topic, uuid, dt, username, data) = msg[1:]
             LOG.debug("Running matcher n°%d on %s", matcher_index, self.name)
-            self.matchers[matcher_index].run(topic, uuid, data)
+            self.matchers[matcher_index].run(topic, uuid, dt, username, data)
 
 
 class Reactor(multiprocessing.Process):
@@ -99,16 +100,21 @@ class Reactor(multiprocessing.Process):
         while True:
             msg = self.sub.recv_multipart()
             try:
-                (topic, uuid, dt, data) = (u(m) for m in msg)
+                (topic, uuid, datetime, username, data) = (u(m) for m in msg)
             except (IndexError, ValueError):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
+            variables = {"topic": topic,
+                         "uuid": uuid,
+                         "datetime": datetime,
+                         "username": username}
             for (i, m) in enumerate(self.matchers):
-                if m.match(topic, uuid, data):
+                if m.match(variables):
                     LOG.debug("%s matching %s", msg, m.name)
                     self.ctrl.send_multipart([b(str(i)),
                                               b(topic),
                                               b(uuid),
-                                              b(dt),
+                                              b(datetime),
+                                              b(username),
                                               b(data)])
