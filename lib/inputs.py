@@ -26,6 +26,8 @@ class ZMQ(Input):
             self.sock.bind(self.url)
         else:
             self.LOG.debug("Connecting to %s", self.url)
+            # TODO: add option
+            self.sock.setsockopt(zmq.SUBSCRIBE, b"")
             self.sock.connect(self.url)
 
         self.LOG.debug("Connecting to inbound")
