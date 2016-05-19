@@ -18,6 +18,7 @@ class Core(multiprocessing.Process):
         # Create the ZMQ context
         self.context = zmq.Context.instance()
         self.pull = self.context.socket(zmq.PULL)
+        LOG.debug("Binding inbound (%s)", self.inbound)
         self.pull.bind(self.inbound)
         self.pub = self.context.socket(zmq.PUB)
         # Set 0 limit on input and output HWM
@@ -30,11 +31,12 @@ class Core(multiprocessing.Process):
             LOG.debug(msg)
 
             # Add a datetime
-            # The format is [topic, uuid, datetime, data as json]
+            # The format is [topic, uuid, datetime, username, data as json]
             new_msg = [msg[0],
                        msg[1],
                        b(datetime.datetime.utcnow().isoformat()),
-                       msg[2]]
+                       msg[2],
+                       msg[3]]
 
             # Publish to all outputs
             self.pub.send_multipart(new_msg)

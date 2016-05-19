@@ -26,6 +26,10 @@ reactor:
       - topic
       - $topic
 
+db:
+  url: sqlite:///db.sqlite3
+  table: messages   # TODO: unused yet
+
 outputs:
 - class: ZMQPub
   name: PublicPub

@@ -8,6 +8,7 @@ import sys
 import yaml
 
 from lib.core import Core
+from lib.db import DB
 from lib.reactor import Reactor
 
 
@@ -63,6 +64,9 @@ def configure_pipeline(conffile):
     core = [Core(conf["core"]["inbound"], conf["core"]["outbound"])]
     if conf.get("reactor", None) is not None:
         core.append(Reactor(conf["reactor"], conf["core"]["outbound"]))
+
+    if conf.get("db", None) is not None:
+        core.append(DB(conf["db"], conf["core"]["outbound"]))
 
     return (core, ins, outs)
 

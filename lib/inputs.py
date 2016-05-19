@@ -40,15 +40,13 @@ class ZMQ(Input):
             msg = self.sock.recv_multipart()
             # TODO: use a pipeline to transform the messages
             try:
-                topic = msg[0]
-                uuid = msg[1]
-                data = msg[2]
+                (topic, uuid, username, data) = msg[:]
             except IndexError:
                 self.LOG.error("Droping invalid message")
                 self.LOG.debug("=> %s", msg)
                 continue
             self.LOG.debug("topic: %s, data: %s", u(topic), data)
-            self.push.send_multipart([topic, uuid, data])
+            self.push.send_multipart(msg)
 
 
 class ZMQPull(ZMQ):
