@@ -30,13 +30,6 @@ class Core(multiprocessing.Process):
             msg = self.pull.recv_multipart()
             LOG.debug(msg)
 
-            # Add a datetime
-            # The format is [topic, uuid, datetime, username, data as json]
-            new_msg = [msg[0],
-                       msg[1],
-                       b(datetime.datetime.utcnow().isoformat()),
-                       msg[2],
-                       msg[3]]
-
+            # TODO: use a proxy
             # Publish to all outputs
-            self.pub.send_multipart(new_msg)
+            self.pub.send_multipart(msg)
