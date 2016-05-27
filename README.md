@@ -29,8 +29,7 @@ Using ReactOBus
 Requirements
 ------------
 
-ReactOBus is known to work with Python3.5 under Linux. It can be ported to
-oledr versions of Python3 if needed.
+ReactOBus is known to work with Python3.4 and Python3.5 under Linux.
 
 It depends on (see **requirements.txt**):
 
