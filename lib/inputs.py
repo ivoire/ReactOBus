@@ -1,7 +1,7 @@
 import logging
 from setproctitle import setproctitle
 import zmq
-from zmq.utils.strtypes import b, u
+from zmq.utils.strtypes import u
 
 from .utils import Pipe
 

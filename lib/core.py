@@ -1,10 +1,7 @@
-import datetime
 import logging
 import multiprocessing
 from setproctitle import setproctitle
-import uuid
 import zmq
-from zmq.utils.strtypes import b
 
 LOG = logging.getLogger("ROB.lib.core")
 
