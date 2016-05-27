@@ -29,13 +29,15 @@ Using ReactOBus
 Requirements
 ------------
 
-ReactOBus is known to work with Python3.4 and Python3.5 under Linux.
+ReactOBus is known to work with Python3.5 under Linux. It can be ported to
+oledr versions of Python3 if needed.
 
 It depends on (see **requirements.txt**):
 
 * pyzmq
 * pyYAML
 * SQLAlchemy (if you wish to store events in a database)
+* setproctitle
 
 
 Installing
