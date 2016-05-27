@@ -18,6 +18,7 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
+from setproctitle import setproctitle
 import multiprocessing
 import re
 import subprocess
@@ -91,6 +92,7 @@ class Reactor(multiprocessing.Process):
         self.workers = []
 
     def setup(self):
+        setproctitle("ReactOBus [reactor]")
         # Connect to the stream
         self.context = zmq.Context.instance()
         self.sub = self.context.socket(zmq.SUB)
