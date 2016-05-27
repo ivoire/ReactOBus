@@ -16,10 +16,10 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True)
-    topic = Column(String)    # TODO: add an index
-    uuid = Column(String)
-    datetime = Column(DateTime(timezone=True))
-    username = Column(String)
+    topic = Column(String, index=True)
+    uuid = Column(String, index=True)
+    datetime = Column(DateTime(timezone=True), index=True)
+    username = Column(String, index=True)
     data = Column(String)
 
 
