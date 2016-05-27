@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import pwd
@@ -25,6 +26,7 @@ def main():
     for i in range(0, num_messages):
         sock.send_multipart([b(topic),
                              b(str(uuid.uuid1())),
+                             b(datetime.datetime.utcnow().isoformat()),
                              b(username),
                              b(json.dumps({'id': i}))])
 
