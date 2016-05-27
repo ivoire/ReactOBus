@@ -1,6 +1,7 @@
 import datetime
 import logging
 import multiprocessing
+from setproctitle import setproctitle
 import uuid
 import zmq
 from zmq.utils.strtypes import b
@@ -15,6 +16,7 @@ class Core(multiprocessing.Process):
         self.outbound = outbound
 
     def run(self):
+        setproctitle("ReactOBus [core]")
         # Create the ZMQ context
         self.context = zmq.Context.instance()
         self.pull = self.context.socket(zmq.PULL)

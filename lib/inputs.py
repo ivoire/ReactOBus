@@ -1,5 +1,5 @@
-import json
 import logging
+from setproctitle import setproctitle
 import zmq
 from zmq.utils.strtypes import b, u
 
@@ -19,6 +19,7 @@ class ZMQ(Input):
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
+        setproctitle("ReactOBus [in-%s]" % self.name)
         self.context = zmq.Context.instance()
         self.sock = self.context.socket(self.socket_type)
         if self.socket_type == zmq.PULL:

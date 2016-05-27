@@ -4,6 +4,7 @@ import multiprocessing
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from setproctitle import setproctitle
 import zmq
 from zmq.utils.strtypes import u
 
@@ -31,6 +32,7 @@ class DB(multiprocessing.Process):
         self.sessions = None
 
     def setup(self):
+        setproctitle("ReactOBus [db]")
         context = zmq.Context.instance()
         self.sub = context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")

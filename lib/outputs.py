@@ -1,4 +1,5 @@
 import logging
+from setproctitle import setproctitle
 import zmq
 
 from .utils import Pipe
@@ -19,6 +20,7 @@ class ZMQPub(Output):
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
+        setproctitle("ReactOBus [out-%s]" % self.name)
         self.context = zmq.Context.instance()
         self.pub = self.context.socket(zmq.PUB)
         self.LOG.debug("Listening on %s", self.url)
