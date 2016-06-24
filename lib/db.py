@@ -21,6 +21,7 @@ import datetime
 import logging
 import multiprocessing
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from setproctitle import setproctitle
@@ -66,17 +67,30 @@ class DB(multiprocessing.Process):
     def run(self):
         self.setup()
 
+        max_db_commit_retry = 3
         while True:
             msg = self.sub.recv_multipart()
             try:
                 (topic, uuid, dt, username, data) = (u(m) for m in msg)
+                dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
             except (IndexError, ValueError):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
             # Save into the database
-            session = self.sessions()
-            dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
-            message = Message(topic=topic, uuid=uuid, datetime=dt, username=username, data=data)
-            session.add(message)
-            session.commit()
+            try:
+                session = self.sessions()
+                message = Message(topic=topic, uuid=uuid, datetime=dt, username=username, data=data)
+                session.add(message)
+            except SQLAlchemyError as err:
+                LOG.erro("Unable to build the new message row: %s", err)
+                continue
+
+            # Retry the database commit
+            for retry in range(1, max_db_commit_retry + 1):
+                try:
+                    session.commit()
+                except SQLAlchemyError as err:
+                    if retry == max_db_commit_retry:
+                        LOG.error("Unable to commit to the database, dropping the message")
+                        LOG.error("Database error: %s", err)
