@@ -3,6 +3,9 @@ inputs:
   name: PullIn
   options:
     url: tcp://*:5554
+    encryption:
+      server: /etc/reactobus/certs/PullIn.key_secret
+      clients: /etc/reactobus/certs/PullIn.d/
 - class: ZMQSub
   name: SubIn
   options:

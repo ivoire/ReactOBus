@@ -20,6 +20,8 @@
 import logging
 from setproctitle import setproctitle
 import zmq
+import zmq.auth
+from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import u
 
 from .utils import Pipe
@@ -33,14 +35,23 @@ class ZMQ(Input):
     def __init__(self, name, options, inbound):
         super().__init__()
         self.url = options["url"]
+        self.secure_config = options.get("encryption", None)
         self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
         self.inbound = inbound
+        self.auth = None
+
+    def secure_setup(self):
+        raise NotImplementedError
 
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
         setproctitle("ReactOBus [in-%s]" % self.name)
         self.context = zmq.Context.instance()
         self.sock = self.context.socket(self.socket_type)
+        # Setup encryption if needed
+        if self.secure_config is not None:
+            self.secure_setup()
+
         if self.socket_type == zmq.PULL:
             self.LOG.debug("Listening on %s", self.url)
             self.sock.bind(self.url)
@@ -55,7 +66,8 @@ class ZMQ(Input):
         self.push.connect(self.inbound)
 
     def run(self):
-        self.setup()
+        self.setup():
+
         while True:
             msg = self.sock.recv_multipart()
             # TODO: use a pipeline to transform the messages
@@ -75,6 +87,25 @@ class ZMQPull(ZMQ):
     def __init__(self, name, options, inbound):
         super().__init__(name, options, inbound)
         self.socket_type = zmq.PULL
+
+    def secure_setup(self):
+        self.LOG.debug("Starting encryption")
+        # Load certificates, TODO: handle errors
+        self.auth = ThreadAuthenticator(self.context)
+        self.auth.start()
+        self.LOG.debug("Server keys in %s", self.secure_config["server"])
+        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["server"])
+        if self.secure_config.get("clients", None) is not None:
+            self.LOG.debug("Client certificates in %s", self.secure_config["clients"])
+            self.auth.configure_curve(domain='*', location=self.secure_config["clients"])
+        else:
+            self.LOG.debug("Every clients can connect")
+            self.auth.configure_curve(domain='*', location=zmq.auth.CURVE_ALLOW_ANY)
+
+        # Setup the socket
+        self.sock.curve_publickey = sock_pub
+        self.sock.curve_secretkey = sock_priv
+        self.sock.curve_server = True
 
 
 class ZMQSub(ZMQ):
