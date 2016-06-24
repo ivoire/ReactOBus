@@ -66,7 +66,7 @@ class ZMQ(Input):
         self.push.connect(self.inbound)
 
     def run(self):
-        self.setup():
+        self.setup()
 
         while True:
             msg = self.sock.recv_multipart()
