@@ -4,12 +4,15 @@ inputs:
   options:
     url: tcp://*:5554
     encryption:
-      server: /etc/reactobus/certs/PullIn.key_secret
+      self: /etc/reactobus/certs/PullIn.key_secret
       clients: /etc/reactobus/certs/PullIn.d/
 - class: ZMQSub
   name: SubIn
   options:
     url: tcp://127.0.0.1:5555
+    encryption:
+      self: /etc/reactobus/certs/SubIn.key_secret
+      server: /etc/reactobus/certs/SubIn-server.key
 
 core:
   inbound: ipc:///tmp/ReactOBus.inbound

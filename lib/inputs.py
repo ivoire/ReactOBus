@@ -50,6 +50,7 @@ class ZMQ(Input):
         self.sock = self.context.socket(self.socket_type)
         # Setup encryption if needed
         if self.secure_config is not None:
+            self.LOG.debug("Starting encryption")
             self.secure_setup()
 
         if self.socket_type == zmq.PULL:
@@ -89,12 +90,12 @@ class ZMQPull(ZMQ):
         self.socket_type = zmq.PULL
 
     def secure_setup(self):
-        self.LOG.debug("Starting encryption")
-        # Load certificates, TODO: handle errors
+        # Load certificates
+        # TODO: handle errors
         self.auth = ThreadAuthenticator(self.context)
         self.auth.start()
-        self.LOG.debug("Server keys in %s", self.secure_config["server"])
-        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["server"])
+        self.LOG.debug("Server keys in %s", self.secure_config["self"])
+        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["self"])
         if self.secure_config.get("clients", None) is not None:
             self.LOG.debug("Client certificates in %s", self.secure_config["clients"])
             self.auth.configure_curve(domain='*', location=self.secure_config["clients"])
@@ -114,3 +115,12 @@ class ZMQSub(ZMQ):
     def __init__(self, name, options, inbound):
         super().__init__(name, options, inbound)
         self.socket_type = zmq.SUB
+
+    def secure_setup(self):
+        # Load certificates
+        # TODO: handle errors
+        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["self"])
+        server_public, _ = zmq.auth.load_certificate(self.secure_config["server"])
+        self.sock.curve_publickey = sock_pub
+        self.sock.curve_secretkey = sock_priv
+        self.sock.curve_serverkey = server_public
