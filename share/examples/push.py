@@ -5,12 +5,14 @@ import pwd
 import sys
 import uuid
 import zmq
+import zmq.auth
 from zmq.utils.strtypes import b
 
 def main():
     # Get the arguments
-    if len(sys.argv) != 4:
-        print("Usage: push.py url topic num_messages")
+    if len(sys.argv) != 4 and len(sys.argv) != 6:
+        print("%d arguments" % len(sys.argv))
+        print("Usage: push.py url topic num_messages [master_cert slave_cert]")
         sys.exit(1)
 
     url = sys.argv[1]
@@ -21,6 +23,15 @@ def main():
     # Create the socket
     context = zmq.Context()
     sock = context.socket(zmq.PUSH)
+    if len(sys.argv) > 4:
+        # Configure encryption
+        (server_public, _) = zmq.auth.load_certificate(sys.argv[4])
+        sock.curve_serverkey = server_public
+
+        (client_public, client_private) = zmq.auth.load_certificate(sys.argv[5])
+        sock.curve_publickey = client_public
+        sock.curve_secretkey = client_private
+
     sock.connect(url)
 
     for i in range(0, num_messages):
