@@ -28,23 +28,27 @@ class Output(Pipe):
     pass
 
 
-class ZMQPub(Output):
-    classname = "ZMQPub"
-
-    def __init__(self, name, options, outbound):
+class ZMQ(Output):
+    def __init_(self, name, options, outbound):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.output.%s" % name)
         self.outbound = outbound
 
+    def secure_setup(self):
+        raise NotImplementedError
+
     def setup(self):
         self.LOG.debug("Setting up %s", self.name)
         setproctitle("ReactOBus [out-%s]" % self.name)
         self.context = zmq.Context.instance()
-        self.pub = self.context.socket(zmq.PUB)
-        self.LOG.debug("Listening on %s", self.url)
-        self.pub.bind(self.url)
 
+        self.sock = self.context.socket(self.socket_type)
+        if self.socket_type == zmq.PUB:
+            self.LOG.debug("Listening on %s", self.url)
+            self.sock.bind(self.url)
+
+        self.LOG.debug("Connecting to outbound")
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
         self.sub.connect(self.outbound)
@@ -56,3 +60,11 @@ class ZMQPub(Output):
             msg = self.sub.recv_multipart()
             self.LOG.debug(msg)
             self.pub.send_multipart(msg)
+
+
+class ZMQPub(ZMQ):
+    classname = "ZMQPub"
+
+    def __init__(self, name, options, outbound):
+        super().__init__(name, options, outbound)
+        self.socket_type = zmq.PUB
