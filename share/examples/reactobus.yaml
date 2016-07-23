@@ -41,7 +41,7 @@ outputs:
   name: PublicPub
   options:
     url: tcp://*:5556
-- class: ZMQPub
-  name: PrivatePub
+- class: ZMQPush
+  name: PrivatePush
   options:
     url: tcp://127.0.0.1:5557

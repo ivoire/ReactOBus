@@ -29,7 +29,7 @@ class Output(Pipe):
 
 
 class ZMQ(Output):
-    def __init_(self, name, options, outbound):
+    def __init__(self, name, options, outbound):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.output.%s" % name)
@@ -47,6 +47,9 @@ class ZMQ(Output):
         if self.socket_type == zmq.PUB:
             self.LOG.debug("Listening on %s", self.url)
             self.sock.bind(self.url)
+        else:
+            self.LOG.debug("Connecting to %s", self.url)
+            self.sock.connect(self.url)
 
         self.LOG.debug("Connecting to outbound")
         self.sub = self.context.socket(zmq.SUB)
@@ -68,3 +71,11 @@ class ZMQPub(ZMQ):
     def __init__(self, name, options, outbound):
         super().__init__(name, options, outbound)
         self.socket_type = zmq.PUB
+
+
+class ZMQPush(ZMQ):
+    classname = "ZMQPush"
+
+    def __init__(self, name, options, outbound):
+        super().__init__(name, options, outbound)
+        self.socket_type = zmq.PUSH
