@@ -37,6 +37,7 @@ class ZMQ(Input):
         self.url = options["url"]
         self.secure_config = options.get("encryption", None)
         self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
+        self.procname = name
         self.inbound = inbound
         self.auth = None
 
@@ -44,8 +45,8 @@ class ZMQ(Input):
         raise NotImplementedError
 
     def setup(self):
-        self.LOG.debug("Setting up %s", self.name)
-        setproctitle("ReactOBus [in-%s]" % self.name)
+        self.LOG.debug("Setting up")
+        setproctitle("ReactOBus [in-%s-%s]" % (self.name, self.procname))
         self.context = zmq.Context.instance()
         self.sock = self.context.socket(self.socket_type)
         # Setup encryption if needed

@@ -33,14 +33,15 @@ class ZMQ(Output):
         super().__init__()
         self.url = options["url"]
         self.LOG = logging.getLogger("ROB.lib.output.%s" % name)
+        self.procname = name
         self.outbound = outbound
 
     def secure_setup(self):
         raise NotImplementedError
 
     def setup(self):
-        self.LOG.debug("Setting up %s", self.name)
-        setproctitle("ReactOBus [out-%s]" % self.name)
+        self.LOG.debug("Setting up")
+        setproctitle("ReactOBus [out-%s-%s]" % (self.name, self.procname))
         self.context = zmq.Context.instance()
 
         self.sock = self.context.socket(self.socket_type)
