@@ -1,15 +1,16 @@
 inputs:
 - class: ZMQSub
-  name: LAVA-in
+  name: staging
   options:
-    url: tcp://127.0.0.1:5500
+    url: tcp://staging.validation.linaro.org:5500
+- class: ZMQSub
+  name: validation
+  options:
+    url: tcp://validation.linaro.org:5510
+
+db:
+  url: sqlite:///lava.sqlite3
 
 core:
   inbound: ipc:///tmp/ReactOBus.lava.inbound
   outbound: ipc:///tmp/ReactOBus.lava.outbound
-
-outputs:
-- class: ZMQPub
-  name: LAVA-out
-  options:
-    url: tcp://*:5501
