@@ -34,7 +34,7 @@ class Matcher(object):
         self.name = rule["name"]
         self.field = rule["match"]["field"]
         self.pattern = re.compile(rule["match"]["pattern"])
-        self.bin = rule["exec"]["path"]
+        self.binary = rule["exec"]["path"]
         self.timeout = rule["exec"]["timeout"]
         self.args = rule["exec"]["args"]
 
@@ -55,7 +55,7 @@ class Matcher(object):
                      "uuid": uuid,
                      "datetime": datetime,
                      "username": username}
-        args = [self.bin]
+        args = [self.binary]
         for arg in self.args:
             if arg[0] == '$':
                 # TODO: check for errors
