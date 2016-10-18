@@ -26,8 +26,6 @@ import sys
 import yaml
 
 from lib.core import Core
-from lib.db import DB
-from lib.reactor import Reactor
 
 
 FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
@@ -81,9 +79,13 @@ def configure_pipeline(conffile):
 
     core = [Core(conf["core"]["inbound"], conf["core"]["outbound"])]
     if conf.get("reactor", None) is not None:
+        # Import the Reactor only when used
+        from lib.reactor import Reactor
         core.append(Reactor(conf["reactor"], conf["core"]["outbound"]))
 
     if conf.get("db", None) is not None:
+        # Import DB here (hence also SQLAlchemy) only when needed
+        from lib.db import DB
         core.append(DB(conf["db"], conf["core"]["outbound"]))
 
     return (core, ins, outs)
