@@ -39,7 +39,7 @@ class Matcher(object):
         self.args = rule["exec"]["args"]
 
     def match(self, variables):
-        if self.field:
+        if self.field in variables:
             return self.pattern.match(variables[self.field]) is not None
         return False
 
