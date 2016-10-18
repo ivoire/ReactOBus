@@ -39,8 +39,15 @@ class Matcher(object):
         self.args = rule["exec"]["args"]
 
     def match(self, variables):
+        # Lookup in the variables
         if self.field in variables:
             return self.pattern.match(variables[self.field]) is not None
+        # Then in data.*
+        elif self.field.startswith("data."):
+            sub_field = self.field[5:]
+            variables = variables.get("data", {})
+            if sub_field in variables:
+                return self.pattern.match(variables[sub_field]) is not None
         return False
 
     def run(self, topic, uuid, datetime, username, data):
@@ -130,7 +137,8 @@ class Reactor(multiprocessing.Process):
             variables = {"topic": topic,
                          "uuid": uuid,
                          "datetime": datetime,
-                         "username": username}
+                         "username": username,
+                         "data": data}
             for (i, m) in enumerate(self.matchers):
                 if m.match(variables):
                     LOG.debug("%s matching %s", msg, m.name)
