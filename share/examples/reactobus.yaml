@@ -31,6 +31,8 @@ reactor:
       args:
       - topic
       - $topic
+      - stdin:topic
+      - stdin:$topic
 
 db:
   url: sqlite:///db.sqlite3

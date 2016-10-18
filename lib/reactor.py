@@ -39,7 +39,6 @@ class Matcher(object):
         self.args = rule["exec"]["args"]
 
     def match(self, variables):
-        # Lookup in the variables
         if self.field in variables:
             return self.pattern.match(variables[self.field]) is not None
         # Then in data.*
@@ -57,6 +56,7 @@ class Matcher(object):
                      "username": username}
 
         args = [self.binary]
+        stdin = []
 
         # Make the substitution
         for field in self.args:
@@ -69,13 +69,19 @@ class Matcher(object):
                     args.append(data[sub_field])
                 else:
                     raise KeyError(field)
+            elif field.startswith('stdin:'):
+                if field[6:].startswith("$"):
+                    stdin.append(variables[arg[7:]].decode("utf-8"))
+                else:
+                    stdin.append(arg[6:])
             else:
                 args.append(field)
-        return args
+        return (args, "\n".join(stdin))
 
     def run(self, topic, uuid, datetime, username, data):
         try:
-            self.build_args(topic, uuid, datatime, username, data)
+            (args, stdin_s) = self.build_args(topic, uuid, datatime, username,
+                                              data)
         except KeyError as exc:
             LOG.error("Unable to build the argument list: %s", exc)
             return
@@ -83,7 +89,8 @@ class Matcher(object):
         LOG.debug("Running: %s", args)
         try:
             out = subprocess.check_output(args, stderr=subprocess.STDOUT,
-                                          timeout=self.timeout)
+                                          universal_newlines=True,
+                                          input=stdin_s, timeout=self.timeout)
         except OSError as err:
             LOG.error("Unable to run %s (%s)", args, err)
         except subprocess.TimeoutExpired:
