@@ -75,21 +75,26 @@ def test_build_args():
     m = Matcher(rule_1)
 
     # Test for classical substitution
-    args = m.build_args("org.reactobus.lava.hello", "uuid", "", "lavauser", {})
+    (args, stdin) = m.build_args("org.reactobus.lava.hello", "uuid", "", "lavauser", {})
     assert args == [m.binary, "topic", "org.reactobus.lava.hello", "username", "lavauser"]
-    args = m.build_args("org.reactobus.lava.something", "uuid", "erty", "kernel-ci", {})
+    assert stdin == ''
+    (args, stdin) = m.build_args("org.reactobus.lava.something", "uuid", "erty", "kernel-ci", {})
     assert args == [m.binary, "topic", "org.reactobus.lava.something", "username", "kernel-ci"]
+    assert stdin == ''
 
     # Test for data.* substitution
     m = Matcher(rule_3)
-    args = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
     assert args == [m.binary, "topic", "org.reactobus", "submitter", "health"]
+    assert stdin == ''
 
     # Without args
     m = Matcher(rule_6)
-    args = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
     assert args == [m.binary]
+    assert stdin == ''
 
+    # TODO: test the "stdin:"
 
 def test_build_args_errors():
     m = Matcher(rule_5)
