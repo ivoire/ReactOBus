@@ -1,3 +1,5 @@
+import pytest
+
 from lib.reactor import Matcher
 
 
@@ -19,7 +21,7 @@ rule_3 = {"name": "data matching",
           "match": {"field": "data.submitter",
                     "pattern": "kernel-ci"},
           "exec": {"path": "/bin/true",
-                   "args": ["topic", "$topic", "username", "$username"],
+                   "args": ["topic", "$topic", "submitter", "$data.submitter"],
                    "timeout": 1}}
 
 rule_4 = {"name": "non_existing_binary",
@@ -27,6 +29,13 @@ rule_4 = {"name": "non_existing_binary",
                     "pattern": "^org.reactobus.lava"},
           "exec": {"path": "not_in_path",
                    "args": ["topic", "$topic", "username", "$username"],
+                   "timeout": 1}}
+
+rule_5 = {"name": "non_existing_field",
+          "match": {"field": "topi",
+                    "pattern": "^org.reactobus.lava"},
+          "exec": {"path": "/bin/true",
+                   "args": ["topic", "$topi", "username", "$username"],
                    "timeout": 1}}
 
 rule_6 = {"name": "empty_in_args",
@@ -60,3 +69,34 @@ def test_data_matching():
 
     assert m.match({"data": {"submitter": "kernel-ci"}}) is True
     assert m.match({"data": {"submitter": "kernel"}}) is False
+
+
+def test_build_args():
+    m = Matcher(rule_1)
+
+    # Test for classical substitution
+    args = m.build_args("org.reactobus.lava.hello", "uuid", "", "lavauser", {})
+    assert args == [m.binary, "topic", "org.reactobus.lava.hello", "username", "lavauser"]
+    args = m.build_args("org.reactobus.lava.something", "uuid", "erty", "kernel-ci", {})
+    assert args == [m.binary, "topic", "org.reactobus.lava.something", "username", "kernel-ci"]
+
+    # Test for data.* substitution
+    m = Matcher(rule_3)
+    args = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    assert args == [m.binary, "topic", "org.reactobus", "submitter", "health"]
+
+    # Without args
+    m = Matcher(rule_6)
+    args = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    assert args == [m.binary]
+
+
+def test_build_args_errors():
+    m = Matcher(rule_5)
+
+    with pytest.raises(KeyError):
+        m.build_args("org.reactobus.lava.hello", "uuid", "", "lavauser", {})
+
+    m = Matcher(rule_3)
+    with pytest.raises(KeyError):
+        m.build_args("org.reactobus", "uuid", "", "lavauser", {"username": "health"})

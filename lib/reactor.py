@@ -50,18 +50,35 @@ class Matcher(object):
                 return self.pattern.match(variables[sub_field]) is not None
         return False
 
-    def run(self, topic, uuid, datetime, username, data):
+    def build_args(self, topic, uuid, datetime, username, data):
         variables = {"topic": topic,
                      "uuid": uuid,
                      "datetime": datetime,
                      "username": username}
+
         args = [self.binary]
-        for arg in self.args:
-            if arg[0] == '$':
-                # TODO: check for errors
-                args.append(variables[arg[1:]])
+
+        # Make the substitution
+        for field in self.args:
+            if field.startswith("$"):
+                field = field[1:]
+                if field in variables:
+                    args.append(variables[field])
+                elif field.startswith("data."):
+                    sub_field = field[5:]
+                    args.append(data[sub_field])
+                else:
+                    raise KeyError(field)
             else:
-                args.append(arg)
+                args.append(field)
+        return args
+
+    def run(self, topic, uuid, datetime, username, data):
+        try:
+            self.build_args(topic, uuid, datatime, username, data)
+        except KeyError as exc:
+            LOG.error("Unable to build the argument list: %s", exc)
+            return
 
         LOG.debug("Running: %s", args)
         try:
