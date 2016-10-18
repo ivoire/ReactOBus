@@ -39,7 +39,9 @@ class Matcher(object):
         self.args = rule["exec"]["args"]
 
     def match(self, variables):
-        return self.pattern.match(variables[self.field]) is not None
+        if self.field:
+            return self.pattern.match(variables[self.field]) is not None
+        return False
 
     def run(self, topic, uuid, datetime, username, data):
         variables = {"topic": topic,
@@ -114,7 +116,6 @@ class Reactor(multiprocessing.Process):
             w = Worker(self.matchers)
             w.start()
             self.workers.append(w)
-
 
     def run(self):
         self.setup()
