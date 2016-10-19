@@ -83,7 +83,7 @@ class Matcher(object):
 
     def run(self, topic, uuid, datetime, username, data):
         try:
-            (args, stdin_s) = self.build_args(topic, uuid, datatime, username,
+            (args, stdin_s) = self.build_args(topic, uuid, datetime, username,
                                               data)
         except KeyError as exc:
             LOG.error("Unable to build the argument list: %s", exc)
