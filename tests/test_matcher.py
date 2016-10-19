@@ -18,6 +18,7 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import pytest
+import subprocess
 
 from lib.reactor import Matcher
 
@@ -70,7 +71,7 @@ rule_7 = {"name": "stdin",
           "exec": {"path": "/bin/true",
                    "args": ["stdin", "stdin:hello", "stdin:$topic",
                             "$data.submitter", "stdin:$data.submitter"],
-                   "timeout": 1}}
+                   "timeout": 4}}
 
 
 def test_simple_matching():
@@ -162,3 +163,41 @@ def test_build_args_errors():
     m = Matcher(rule_3)
     with pytest.raises(KeyError):
         m.build_args("org.reactobus", "uuid", "", "lavauser", {"username": "health"})
+
+
+def test_run(monkeypatch):
+    m_args = []
+    m_input = ""
+    m_timeout = 0
+
+    def mock_check_output(args, stderr, universal_newlines, input, timeout):
+        nonlocal m_args
+        nonlocal m_input
+        nonlocal m_timeout
+        m_args = args
+        m_input = input
+        m_timeout = timeout
+        return ""
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+    m = Matcher(rule_1)
+
+    m.run("org.reactobus", "uuid", "0", "lavauser", {})
+    assert m_args == [m.binary, "topic", "org.reactobus", "username", "lavauser"]
+    assert m_input == ""
+    assert m_timeout == 1
+
+    m.run("org.reactobus.test", "uuid", "0", "kernel", {})
+    assert m_args == [m.binary, "topic", "org.reactobus.test", "username", "kernel"]
+    assert m_input == ""
+    assert m_timeout == 1
+
+    m = Matcher(rule_7)
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"submitter": "myself"})
+    assert m_args == [m.binary, "stdin", "myself"]
+    assert m_input == "hello\norg.reactobus.test\nmyself"
+    assert m_timeout == 4
+
+    m_args = None
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
+    assert m_args is None
