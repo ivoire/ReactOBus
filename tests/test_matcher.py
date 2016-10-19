@@ -45,30 +45,58 @@ rule_6 = {"name": "empty_in_args",
                    "args": [],
                    "timeout": 1}}
 
+rule_7 = {"name": "stdin",
+          "match": {"field": "topic",
+                    "pattern": "^org.reactobus.lava"},
+          "exec": {"path": "/bin/true",
+                   "args": ["stdin", "stdin:hello", "stdin:$topic",
+                            "$data.submitter", "stdin:$data.submitter"],
+                   "timeout": 1}}
+
 
 def test_simple_matching():
     m = Matcher(rule_1)
 
-    assert m.match({"topic": "org.reactobus.lava"}) is True
-    assert m.match({"topic": "org.reactobus.lava.job"}) is True
-    assert m.match({"topic": "reactobus.lava"}) is False
+    assert m.match({"topic": "org.reactobus.lava"}, {}) is True
+    assert m.match({"topic": "org.reactobus.lava.job"}, {}) is True
+    assert m.match({"topic": "reactobus.lava"}, {}) is False
     # Non existing field will return False
-    assert m.match({"topi": "reactobus.lava"}) is False
+    assert m.match({"topi": "reactobus.lava"}, {}) is False
 
 
 def test_simple_matching_2():
     m = Matcher(rule_2)
 
-    assert m.match({"topic": "something", "username": "a_kernel_"}) is True
+    assert m.match({"topic": "something", "username": "a_kernel_"}, {}) is True
     # Non existing field will return False
-    assert m.match({"topic": "something", "user": "a_kernel_"}) is False
+    assert m.match({"topic": "something", "user": "a_kernel_"}, {}) is False
 
 
 def test_data_matching():
     m = Matcher(rule_3)
 
-    assert m.match({"data": {"submitter": "kernel-ci"}}) is True
-    assert m.match({"data": {"submitter": "kernel"}}) is False
+    assert m.match({}, {"submitter": "kernel-ci"}) is True
+    assert m.match({}, {"submitter": "kernel"}) is False
+
+
+def test_lookup():
+    assert Matcher.lookup("username", {"username": "kernel"}, {}) == "kernel"
+    assert Matcher.lookup("msg", {"username": "kernel", "msg": "hello"}, {}) == "hello"
+
+    assert Matcher.lookup("data", {"msg": "something"}, {}) == {}
+    assert Matcher.lookup("data", {"msg": "something"}, {"hello": "world"}) == {"hello": "world"}
+
+    assert Matcher.lookup("data.key", {"msg": "something"}, {"key": "value"}) == "value"
+    assert Matcher.lookup("data.hello", {"msg": "something"}, {"hello": "world"}) == "world"
+
+    with pytest.raises(KeyError):
+        Matcher.lookup("msg", {}, {})
+    with pytest.raises(KeyError):
+        Matcher.lookup("msg", {}, {"msg": "value"})
+    with pytest.raises(KeyError):
+        Matcher.lookup("msg", {"username": "kernel"}, {})
+    with pytest.raises(KeyError):
+        Matcher.lookup("data.username", {"username": "kernel"}, {})
 
 
 def test_build_args():
@@ -94,7 +122,17 @@ def test_build_args():
     assert args == [m.binary]
     assert stdin == ''
 
-    # TODO: test the "stdin:"
+    # With "stdin:" and "$data."
+    m = Matcher(rule_7)
+    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "",
+                                 {"submitter": "kernel-ci", "key": "value"})
+    assert args == [m.binary, "stdin", "kernel-ci"]
+    assert stdin == "hello\norg.reactobus\nkernel-ci"
+
+    with pytest.raises(KeyError):
+        (args, stdin) = m.build_args("org.reactobus", "uuid", "", "",
+                                     {"key": "value"})
+
 
 def test_build_args_errors():
     m = Matcher(rule_5)

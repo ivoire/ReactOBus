@@ -38,16 +38,27 @@ class Matcher(object):
         self.timeout = rule["exec"]["timeout"]
         self.args = rule["exec"]["args"]
 
-    def match(self, variables):
-        if self.field in variables:
-            return self.pattern.match(variables[self.field]) is not None
-        # Then in data.*
-        elif self.field.startswith("data."):
-            sub_field = self.field[5:]
-            variables = variables.get("data", {})
-            if sub_field in variables:
-                return self.pattern.match(variables[sub_field]) is not None
-        return False
+    @classmethod
+    def lookup(cls, name, variables, data):
+        # Lookup in variables and fallback to data if the name is of the form
+        # "data.key"
+        if name in variables:
+            return variables[name]
+        elif name == "data":
+            return data
+        elif name.startswith("data."):
+            sub_name = name[5:]
+            if sub_name in data:
+                return data[sub_name]
+        raise KeyError(name)
+
+    def match(self, variables, data):
+        # Returne True if the field does match, overwise return False
+        try:
+            value = self.lookup(self.field, variables, data)
+            return self.pattern.match(value) is not None
+        except KeyError:
+            return False
 
     def build_args(self, topic, uuid, datetime, username, data):
         variables = {"topic": topic,
@@ -57,23 +68,15 @@ class Matcher(object):
 
         args = [self.binary]
         stdin = []
-
         # Make the substitution
         for field in self.args:
             if field.startswith("$"):
-                field = field[1:]
-                if field in variables:
-                    args.append(variables[field])
-                elif field.startswith("data."):
-                    sub_field = field[5:]
-                    args.append(data[sub_field])
-                else:
-                    raise KeyError(field)
-            elif field.startswith('stdin:'):
+                args.append(self.lookup(field[1:], variables, data))
+            elif field.startswith("stdin:"):
                 if field[6:].startswith("$"):
-                    stdin.append(variables[arg[7:]].decode("utf-8"))
+                    stdin.append(self.lookup(field[7:], variables, data))
                 else:
-                    stdin.append(arg[6:])
+                    stdin.append(field[6:])
             else:
                 args.append(field)
         return (args, "\n".join(stdin))
@@ -161,10 +164,9 @@ class Reactor(multiprocessing.Process):
             variables = {"topic": topic,
                          "uuid": uuid,
                          "datetime": datetime,
-                         "username": username,
-                         "data": data}
+                         "username": username}
             for (i, m) in enumerate(self.matchers):
-                if m.match(variables):
+                if m.match(variables, data):
                     LOG.debug("%s matching %s", msg, m.name)
                     self.ctrl.send_multipart([b(str(i)),
                                               b(topic),
