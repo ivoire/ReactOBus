@@ -83,7 +83,7 @@ class DB(multiprocessing.Process):
                 message = Message(topic=topic, uuid=uuid, datetime=dt, username=username, data=data)
                 session.add(message)
             except SQLAlchemyError as err:
-                LOG.erro("Unable to build the new message row: %s", err)
+                LOG.error("Unable to build the new message row: %s", err)
                 continue
 
             # Retry the database commit
