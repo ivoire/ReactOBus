@@ -115,7 +115,7 @@ class Worker(threading.Thread):
             msg = self.sock.recv_multipart()
             matcher_index = int(msg[0])
             (topic, uuid, dt, username, data) = msg[1:]
-            LOG.debug("Running matcher n°%d on %s", matcher_index, self.name)
+            LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
             self.matchers[matcher_index].run(topic, uuid, dt, username, data)
 
 
