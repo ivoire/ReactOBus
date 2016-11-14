@@ -18,13 +18,14 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import datetime
+import imp
 import json
 import pytest
 import uuid
 import zmq
+import sqlalchemy.orm
 
-from ReactOBus.db import DB, Message
-
+import ReactOBus.db
 
 class ZMQMockSocket(object):
     def __init__(self):
@@ -63,7 +64,7 @@ def test_run(monkeypatch, tmpdir):
 
     dbname = tmpdir.join('testing.sqlite3')
     db_url = "sqlite:///%s" % dbname
-    db = DB({'url': db_url}, "inproc://test_run")
+    db = ReactOBus.db.DB({'url': db_url}, "inproc://test_run")
     with pytest.raises(IndexError):
         db.run()
     assert zmq_mock.sock.connected is True
@@ -76,7 +77,7 @@ def test_run(monkeypatch, tmpdir):
 
     # Check that the db is empty
     session = db.sessions()
-    assert session.query(Message).count() == 0
+    assert session.query(ReactOBus.db.Message).count() == 0
 
     # Test that wrong message will not make the process crash
     zmq_mock.sock.msgs = [
@@ -101,8 +102,64 @@ def test_run(monkeypatch, tmpdir):
 
     # Check that the db is empty
     session = db.sessions()
-    assert session.query(Message).count() == 4
-    assert session.query(Message).get(1).topic == "org.reactobus.1"
-    assert session.query(Message).get(2).topic == "org.reactobus.2"
-    assert session.query(Message).get(3).topic == "org.reactobus.3"
-    assert session.query(Message).get(4).topic == "org.reactobus.5"
+    assert session.query(ReactOBus.db.Message).count() == 4
+    assert session.query(ReactOBus.db.Message).get(1).topic == "org.reactobus.1"
+    assert session.query(ReactOBus.db.Message).get(2).topic == "org.reactobus.2"
+    assert session.query(ReactOBus.db.Message).get(3).topic == "org.reactobus.3"
+    assert session.query(ReactOBus.db.Message).get(4).topic == "org.reactobus.5"
+
+
+class SessionMock(object):
+    def __init__(self):
+        self.messages = 0
+        self.commits = 0
+
+    def add(self, message):
+        self.messages += 1
+
+    def commit(self):
+        self.commits += 1
+        from sqlalchemy.exc import SQLAlchemyError
+        raise SQLAlchemyError
+
+
+class SessionsMock(object):
+    def __init__(self):
+        self.session_mock = SessionMock()
+
+    def __call__(self):
+        return self.session_mock
+
+
+def test_errors(monkeypatch, tmpdir):
+    zmq_mock = ZMQMock()
+    zmq_mock.sock.msgs = [
+                          ["org.reactobus.1", str(uuid.uuid1()),
+                           datetime.datetime.utcnow().isoformat(),
+                           "lavaserver", json.dumps({})],
+                          ["org.reactobus.1", str(uuid.uuid1()),
+                           datetime.datetime.utcnow().isoformat(),
+                           "lavaserver", json.dumps({})]]
+    def mock_zmq_context():
+        nonlocal zmq_mock
+        return zmq_mock
+    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_context)
+
+    sessions_mock = SessionsMock()
+    def mock_sessionmaker(bind):
+        return sessions_mock
+    monkeypatch.setattr(sqlalchemy.orm, "sessionmaker", mock_sessionmaker)
+
+    # Reload the module to apply the monkey patching
+    imp.reload(ReactOBus.db)
+
+    # Create the DB
+    dbname = tmpdir.join('testing.sqlite3')
+    db_url = "sqlite:///%s" % dbname
+    db = ReactOBus.db.DB({'url': db_url}, "inproc://test_run")
+
+    # Run with two messages
+    with pytest.raises(IndexError):
+        db.run()
+    assert sessions_mock.session_mock.messages == 2
+    assert sessions_mock.session_mock.commits == 6

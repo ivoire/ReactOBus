@@ -87,7 +87,7 @@ class DB(multiprocessing.Process):
                 continue
 
             # Retry the database commit
-            for retry in range(0, max_db_commit_retry):
+            for retry in range(1, max_db_commit_retry + 1):
                 try:
                     session.commit()
                 except SQLAlchemyError as err:
