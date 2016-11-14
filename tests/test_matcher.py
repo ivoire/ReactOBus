@@ -201,3 +201,20 @@ def test_run(monkeypatch):
     m_args = None
     m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
     assert m_args is None
+
+
+def test_run_raise_oserror(monkeypatch):
+    def mock_check_output_raise_oserror(args, stderr, universal_newlines, input, timeout):
+        raise OSError
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output_raise_oserror)
+    m = Matcher(rule_1)
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
+
+
+def test_run_raise_timeout(monkeypatch):
+    def mock_check_output_raise_oserror(args, stderr, universal_newlines, input, timeout):
+        import subprocess
+        raise subprocess.TimeoutExpired(args[0], timeout)
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output_raise_oserror)
+    m = Matcher(rule_1)
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
