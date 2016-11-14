@@ -20,7 +20,7 @@
 import pytest
 import subprocess
 
-from lib.reactor import Matcher
+from ReactOBus.reactor import Matcher
 
 
 rule_1 = {"name": "first test",

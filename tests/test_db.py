@@ -23,7 +23,7 @@ import pytest
 import uuid
 import zmq
 
-from lib.db import DB, Message
+from ReactOBus.db import DB, Message
 
 
 class ZMQMockSocket(object):
