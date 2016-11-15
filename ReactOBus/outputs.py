@@ -63,7 +63,7 @@ class ZMQ(Output):
         while True:
             msg = self.sub.recv_multipart()
             self.LOG.debug(msg)
-            self.pub.send_multipart(msg)
+            self.sock.send_multipart(msg)
 
 
 class ZMQPub(ZMQ):
