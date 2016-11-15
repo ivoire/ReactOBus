@@ -27,7 +27,7 @@ import zmq
 def test_select():
     from ReactOBus.inputs import Input, ZMQPull, ZMQSub
 
-    i = Input.select("ZMQPull", "pull", {"url" :""}, "")
+    i = Input.select("ZMQPull", "pull", {"url": ""}, "")
     assert isinstance(i, ZMQPull)
 
     i = Input.select("ZMQSub", "sub", {"url": ""}, "")
@@ -58,31 +58,31 @@ def test_zmq_pull(monkeypatch, tmpdir):
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)
+
     class MockZMQSocket(object):
         def __init__(self, socket, count):
             self.socket = socket
             self.count = count
             self.mocked = False
-    
+
         def recv_multipart(self):
             self.count -= 1
             if not self.mocked or self.count:
                 return self.socket.recv_multipart()
             else:
                 raise IndexError
-    
+
         def bind(self, addr):
             self.mocked = bool(addr[-4:] == "push")
             self.socket.bind(addr)
-    
-    
+
     class MockZMQInstance(object):
         def __init__(self):
             self.instance = zmq.Context.instance()
-    
+
         def __call__(self):
             return self
-    
+
         def socket(self, socket_type):
             socket = self.instance.socket(socket_type)
             if socket_type == zmq.PULL:
@@ -93,7 +93,7 @@ def test_zmq_pull(monkeypatch, tmpdir):
     mock_zmq_instance = MockZMQInstance()
     monkeypatch.setattr(zmq.Context, "instance", mock_zmq_instance)
 
-    url ="ipc://%s" % tmpdir.join("ReactOBus.test.push")
+    url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
     inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")
 
     p = ZMQPull("pull", {"url": url}, inbound)
@@ -110,7 +110,8 @@ def test_zmq_pull(monkeypatch, tmpdir):
     # Send an invalid message that will be dropped
     push.send_multipart([b"test"])
     # Send a valid message
-    orig_msg = [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"]
+    orig_msg = [b"org.reactobus.test", b"uuid", b"2016-11-15",
+                b"testing", b"{}"]
     push.send_multipart(orig_msg)
 
     msg = pull.recv_multipart()
