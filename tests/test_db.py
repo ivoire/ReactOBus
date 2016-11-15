@@ -21,9 +21,10 @@ import datetime
 import imp
 import json
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy.orm
 import uuid
 import zmq
-import sqlalchemy.orm
 
 
 class ZMQMockSocket(object):
@@ -48,18 +49,16 @@ class ZMQMock(object):
     def __init__(self):
         self.sock = ZMQMockSocket()
 
+    def __call__(self):
+        return self
+
     def socket(self, sock_type):
         return self.sock
 
 
 def test_run(monkeypatch, tmpdir):
     zmq_mock = ZMQMock()
-
-    def mock_zmq_context():
-        nonlocal zmq_mock
-        return zmq_mock
-
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_context)
+    monkeypatch.setattr(zmq.Context, "instance", zmq_mock)
 
     from ReactOBus.db import DB, Message
 
@@ -114,9 +113,13 @@ class SessionMock(object):
     def __init__(self):
         self.messages = 0
         self.commits = 0
+        self.raise_on_add = False
 
     def add(self, message):
-        self.messages += 1
+        if self.raise_on_add:
+            raise SQLAlchemyError
+        else:
+            self.messages += 1
 
     def commit(self):
         self.commits += 1
@@ -142,10 +145,7 @@ def test_errors(monkeypatch, tmpdir):
                            datetime.datetime.utcnow().isoformat(),
                            "lavaserver", json.dumps({})]]
 
-    def mock_zmq_context():
-        nonlocal zmq_mock
-        return zmq_mock
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_context)
+    monkeypatch.setattr(zmq.Context, "instance", zmq_mock)
 
     sessions_mock = SessionsMock()
 
@@ -168,3 +168,19 @@ def test_errors(monkeypatch, tmpdir):
         db.run()
     assert sessions_mock.session_mock.messages == 2
     assert sessions_mock.session_mock.commits == 6
+
+    # Re-run with two messages but raise on session.add()
+    zmq_mock.sock.msgs = [
+                          ["org.reactobus.1", str(uuid.uuid1()),
+                           datetime.datetime.utcnow().isoformat(),
+                           "lavaserver", json.dumps({})],
+                          ["org.reactobus.1", str(uuid.uuid1()),
+                           datetime.datetime.utcnow().isoformat(),
+                           "lavaserver", json.dumps({})]]
+    sessions_mock.session_mock.raise_on_add = True
+    sessions_mock.session_mock.messages = 0
+    sessions_mock.session_mock.commits = 0
+    with pytest.raises(IndexError):
+        db.run()
+    assert sessions_mock.session_mock.messages == 0
+    assert sessions_mock.session_mock.commits == 0
