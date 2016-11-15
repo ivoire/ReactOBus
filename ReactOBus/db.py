@@ -32,6 +32,8 @@ LOG = logging.getLogger("ROB.lib.DB")
 
 
 Base = declarative_base()
+
+
 class Message(Base):
     __tablename__ = "messages"
 
@@ -80,7 +82,8 @@ class DB(multiprocessing.Process):
             # Save into the database
             try:
                 session = self.sessions()
-                message = Message(topic=topic, uuid=uuid, datetime=dt, username=username, data=data)
+                message = Message(topic=topic, uuid=uuid, datetime=dt,
+                                  username=username, data=data)
                 session.add(message)
             except SQLAlchemyError as err:
                 LOG.error("Unable to build the new message row: %s", err)

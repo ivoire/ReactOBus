@@ -98,11 +98,14 @@ class ZMQPull(ZMQ):
         self.LOG.debug("Server keys in %s", self.secure_config["self"])
         sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["self"])
         if self.secure_config.get("clients", None) is not None:
-            self.LOG.debug("Client certificates in %s", self.secure_config["clients"])
-            self.auth.configure_curve(domain='*', location=self.secure_config["clients"])
+            self.LOG.debug("Client certificates in %s",
+                           self.secure_config["clients"])
+            self.auth.configure_curve(domain='*',
+                                      location=self.secure_config["clients"])
         else:
             self.LOG.debug("Every clients can connect")
-            self.auth.configure_curve(domain='*', location=zmq.auth.CURVE_ALLOW_ANY)
+            self.auth.configure_curve(domain='*',
+                                      location=zmq.auth.CURVE_ALLOW_ANY)
 
         # Setup the socket
         self.sock.curve_publickey = sock_pub

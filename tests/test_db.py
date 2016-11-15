@@ -27,6 +27,7 @@ import sqlalchemy.orm
 
 import ReactOBus.db
 
+
 class ZMQMockSocket(object):
     def __init__(self):
         self.connected = False
@@ -140,12 +141,14 @@ def test_errors(monkeypatch, tmpdir):
                           ["org.reactobus.1", str(uuid.uuid1()),
                            datetime.datetime.utcnow().isoformat(),
                            "lavaserver", json.dumps({})]]
+
     def mock_zmq_context():
         nonlocal zmq_mock
         return zmq_mock
     monkeypatch.setattr(zmq.Context, "instance", mock_zmq_context)
 
     sessions_mock = SessionsMock()
+
     def mock_sessionmaker(bind):
         return sessions_mock
     monkeypatch.setattr(sqlalchemy.orm, "sessionmaker", mock_sessionmaker)
