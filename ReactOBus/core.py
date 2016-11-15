@@ -22,7 +22,7 @@ import multiprocessing
 from setproctitle import setproctitle
 import zmq
 
-LOG = logging.getLogger("ROB.lib.core")
+LOG = logging.getLogger("ROB.core")
 
 
 class Core(multiprocessing.Process):

@@ -26,7 +26,7 @@ import threading
 import zmq
 from zmq.utils.strtypes import b, u
 
-LOG = logging.getLogger("ROB.lib.reactor")
+LOG = logging.getLogger("ROB.reactor")
 
 
 class Matcher(object):

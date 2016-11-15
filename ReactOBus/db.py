@@ -28,7 +28,7 @@ from setproctitle import setproctitle
 import zmq
 from zmq.utils.strtypes import u
 
-LOG = logging.getLogger("ROB.lib.DB")
+LOG = logging.getLogger("ROB.DB")
 
 
 Base = declarative_base()

@@ -36,7 +36,7 @@ class ZMQ(Input):
         super().__init__()
         self.url = options["url"]
         self.secure_config = options.get("encryption", None)
-        self.LOG = logging.getLogger("ROB.lib.input.%s" % name)
+        self.LOG = logging.getLogger("ROB.input.%s" % name)
         self.procname = name
         self.inbound = inbound
         self.auth = None

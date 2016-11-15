@@ -32,7 +32,7 @@ class ZMQ(Output):
     def __init__(self, name, options, outbound):
         super().__init__()
         self.url = options["url"]
-        self.LOG = logging.getLogger("ROB.lib.output.%s" % name)
+        self.LOG = logging.getLogger("ROB.output.%s" % name)
         self.procname = name
         self.outbound = outbound
 
