@@ -113,10 +113,13 @@ class Worker(threading.Thread):
         self.sock.connect("inproc://workers")
         while True:
             msg = self.sock.recv_multipart()
-            matcher_index = int(msg[0])
-            (topic, uuid, dt, username, data) = msg[1:]
-            LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
-            self.matchers[matcher_index].run(topic, uuid, dt, username, data)
+            try:
+                matcher_index = int(msg[0])
+                (topic, uuid, dt, username, data) = msg[1:]
+                LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
+                self.matchers[matcher_index].run(topic, uuid, dt, username, data)
+            except ValueError:
+                LOG.error("Invalid message")
 
 
 class Reactor(multiprocessing.Process):
