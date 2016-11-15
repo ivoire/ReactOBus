@@ -25,8 +25,6 @@ import uuid
 import zmq
 import sqlalchemy.orm
 
-import ReactOBus.db
-
 
 class ZMQMockSocket(object):
     def __init__(self):
@@ -63,9 +61,11 @@ def test_run(monkeypatch, tmpdir):
 
     monkeypatch.setattr(zmq.Context, "instance", mock_zmq_context)
 
+    from ReactOBus.db import DB, Message
+
     dbname = tmpdir.join('testing.sqlite3')
     db_url = "sqlite:///%s" % dbname
-    db = ReactOBus.db.DB({'url': db_url}, "inproc://test_run")
+    db = DB({'url': db_url}, "inproc://test_run")
     with pytest.raises(IndexError):
         db.run()
     assert zmq_mock.sock.connected is True
@@ -78,7 +78,7 @@ def test_run(monkeypatch, tmpdir):
 
     # Check that the db is empty
     session = db.sessions()
-    assert session.query(ReactOBus.db.Message).count() == 0
+    assert session.query(Message).count() == 0
 
     # Test that wrong message will not make the process crash
     zmq_mock.sock.msgs = [
@@ -103,11 +103,11 @@ def test_run(monkeypatch, tmpdir):
 
     # Check that the db is empty
     session = db.sessions()
-    assert session.query(ReactOBus.db.Message).count() == 4
-    assert session.query(ReactOBus.db.Message).get(1).topic == "org.reactobus.1"
-    assert session.query(ReactOBus.db.Message).get(2).topic == "org.reactobus.2"
-    assert session.query(ReactOBus.db.Message).get(3).topic == "org.reactobus.3"
-    assert session.query(ReactOBus.db.Message).get(4).topic == "org.reactobus.5"
+    assert session.query(Message).count() == 4
+    assert session.query(Message).get(1).topic == "org.reactobus.1"
+    assert session.query(Message).get(2).topic == "org.reactobus.2"
+    assert session.query(Message).get(3).topic == "org.reactobus.3"
+    assert session.query(Message).get(4).topic == "org.reactobus.5"
 
 
 class SessionMock(object):
@@ -154,12 +154,14 @@ def test_errors(monkeypatch, tmpdir):
     monkeypatch.setattr(sqlalchemy.orm, "sessionmaker", mock_sessionmaker)
 
     # Reload the module to apply the monkey patching
+    import ReactOBus.db
+    from ReactOBus.db import DB
     imp.reload(ReactOBus.db)
 
     # Create the DB
     dbname = tmpdir.join('testing.sqlite3')
     db_url = "sqlite:///%s" % dbname
-    db = ReactOBus.db.DB({'url': db_url}, "inproc://test_run")
+    db = DB({'url': db_url}, "inproc://test_run")
 
     # Run with two messages
     with pytest.raises(IndexError):
