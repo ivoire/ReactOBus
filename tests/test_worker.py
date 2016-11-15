@@ -19,6 +19,7 @@
 
 from ReactOBus.reactor import Worker
 
+import time
 import zmq
 
 
@@ -80,6 +81,7 @@ def test_worker(monkeypatch):
     w.start()
 
     # Push jobs
+    time.sleep(1)
     push.send_multipart([b"0", b"org.reactobus.test", b"", b"", b"", b""])
     push.send_multipart([b"2", b"org.reactobus.test", b"", b"", b"", b""])
     w.join()
@@ -91,6 +93,7 @@ def test_worker(monkeypatch):
     matchers = [Matcher(), Matcher(), Matcher()]
     w = Worker(matchers)
     w.start()
+    time.sleep(1)
     push.send_multipart([b"a", b"org.reactobus.test", b"", b"", b"", b""])
     push.send_multipart([b"2", b"org.reactobus.test", b"", b"", b""])
     w.join()
