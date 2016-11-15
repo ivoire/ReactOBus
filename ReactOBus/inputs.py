@@ -75,7 +75,7 @@ class ZMQ(Input):
             # TODO: use a pipeline to transform the messages
             try:
                 (topic, uuid, dt, username, data) = msg[:]
-            except IndexError:
+            except ValueError:
                 self.LOG.error("Droping invalid message")
                 self.LOG.debug("=> %s", msg)
                 continue
