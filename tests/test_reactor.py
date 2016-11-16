@@ -27,6 +27,7 @@ class ZMQMockSocket(object):
         self.opts = {}
         self.url = None
         self.msgs = []
+        self.send_msgs = []
 
     def setsockopt(self, key, value):
         self.opts[key] = value
@@ -41,6 +42,9 @@ class ZMQMockSocket(object):
 
     def recv_multipart(self):
         return self.msgs.pop(0)
+
+    def send_multipart(self, msg):
+        self.send_msgs.append(msg)
 
 
 class ZMQMock(object):
@@ -87,17 +91,23 @@ def test_reactor(monkeypatch):
     assert zmq_mock.socks[zmq.DEALER].connected is True
     assert zmq_mock.socks[zmq.DEALER].opts == {}
     assert zmq_mock.socks[zmq.DEALER].url == "inproc://workers"
+    assert len(zmq_mock.socks[zmq.DEALER].send_msgs) == 0
 
     options = {
         "rules": [{"name": "first test",
-                  "match": {"field": "topic",
-                            "pattern": "^org.reactobus.lava"},
-                  "exec": {"path": "/bin/true",
-                           "args": ["topic", "$topic", "username", "$username"],
-                           "timeout": 1}}],
+                   "match": {"field": "topic",
+                             "pattern": "^org.reactobus.lava"},
+                   "exec": {"path": "/bin/true",
+                            "args": ["topic", "$topic", "username",
+                                     "$username"],
+                            "timeout": 1}}],
         "workers": 2
     }
     r = Reactor(options, "inproc://test")
+    zmq_mock.socks[zmq.SUB].msgs = [
+        ["org.reactobus.lava", "uuid", "2016", "lavauser", "{}"],
+        ["org.reactobus.lava", ""]
+    ]
     with pytest.raises(IndexError):
         r.run()
 
@@ -112,3 +122,7 @@ def test_reactor(monkeypatch):
     assert zmq_mock.socks[zmq.DEALER].connected is True
     assert zmq_mock.socks[zmq.DEALER].opts == {}
     assert zmq_mock.socks[zmq.DEALER].url == "inproc://workers"
+    assert len(zmq_mock.socks[zmq.DEALER].send_msgs) == 1
+    assert zmq_mock.socks[zmq.DEALER].send_msgs[0] == [b"0", b"org.reactobus.lava",
+                                                       b"uuid", b"2016",
+                                                       b"lavauser", b"{}"]
