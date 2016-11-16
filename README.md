@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ivoire/ReactOBus.svg?branch=master)](https://travis-ci.org/ivoire/ReactOBus) [![Coverage Status](https://coveralls.io/repos/github/ivoire/ReactOBus/badge.svg?branch=master)](https://coveralls.io/github/ivoire/ReactOBus?branch=master) 
+[![Build Status](https://travis-ci.org/ivoire/ReactOBus.svg?branch=master)](https://travis-ci.org/ivoire/ReactOBus) [![Coverage Status](https://coveralls.io/repos/github/ivoire/ReactOBus/badge.svg?branch=master)](https://coveralls.io/github/ivoire/ReactOBus?branch=master) [![Code Health](https://landscape.io/github/ivoire/ReactOBus/master/landscape.svg?style=flat)](https://landscape.io/github/ivoire/ReactOBus/master)
 
 ReactOBus
 ========
