@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ivoire/ReactOBus.svg?branch=master)](https://travis-ci.org/ivoire/ReactOBus) [![Coverage Status](https://coveralls.io/repos/github/ivoire/ReactOBus/badge.svg?branch=master)](https://coveralls.io/github/ivoire/ReactOBus?branch=master) 
+
 ReactOBus
 ========
 
@@ -78,3 +80,24 @@ should be multipart ZMQ messages with the folowing meaning:
 * **datetime** when the message was generated (isoformat)
 * **username** of the sending process or user
 * **data** as JSON
+
+
+Testing ReactOBus
+=================
+
+In order to run ReactOBus automatic tests, you will have to install *py.test*:
+
+    pip install pytest
+
+Then run the tests using:
+
+    py.test tests -v
+    [...]
+    tests/test_core.py::test_core PASSED
+    tests/test_db.py::test_run PASSED
+    tests/test_db.py::test_errors PASSED
+    [...]
+
+On each push, the tests and the coverage are computed on:
+* [https://travis-ci.org/ivoire/ReactOBus](tests results)
+* [https://coveralls.io/github/ivoire/ReactOBus](coverage report)
