@@ -106,6 +106,7 @@ def test_reactor(monkeypatch):
     r = Reactor(options, "inproc://test")
     zmq_mock.socks[zmq.SUB].msgs = [
         ["org.reactobus.lava", "uuid", "2016", "lavauser", "{}"],
+        ["org.reactobus.lav", "uuid", "2016", "lavauser", "{}"],
         ["org.reactobus.lava", ""]
     ]
     with pytest.raises(IndexError):
