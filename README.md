@@ -109,5 +109,6 @@ Then run the tests using:
     [...]
 
 On each push, the tests and the coverage are computed on:
+
 * [Test results](https://travis-ci.org/ivoire/ReactOBus)
 * [Coverage report](https://coveralls.io/github/ivoire/ReactOBus)
