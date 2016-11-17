@@ -24,6 +24,7 @@ setup(
     name="ReactOBus",
     version="0.1",
     description="A message broker to create software bus over the network",
+    long_description=open('README.md', 'r').read(),
     url="https://github.com/ivoire/ReactOBus",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -48,7 +49,12 @@ setup(
     install_requires=[
         "PyYAML",
         "pyzmq",
-        # TODO: later-on add "SQLAlchemy",
         "setproctitle"
-    ]
+    ],
+    extras_require={
+        # SQLAlchemy is optional because the ReactOBus.db module is loaded only
+        # when used
+        'db':  ["SQLAlchemy"]
+    }
+
 )

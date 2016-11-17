@@ -50,8 +50,9 @@ can be installed with:
     pip install ReactOBus
 
 By default, **pip** will not install SQLAlchemy. If need, install it manually
-afterward.
+afterward or ask pip to include the right ReactOBus variant with:
 
+    pip install ReactOBus[db]
 
 It's also possible to execute ReactOBus directly from the sources:
 
