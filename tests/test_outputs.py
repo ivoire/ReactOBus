@@ -18,10 +18,10 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import imp
-import multiprocessing
-import multiprocessing.dummy
 import pytest
 import zmq
+
+from . import mock
 
 
 def test_select():
@@ -45,10 +45,6 @@ def test_zmq_class():
 
 
 def test_zmq_push(monkeypatch, tmpdir):
-    # Replace multiprocessing by threading
-    monkeypatch.setattr(multiprocessing, "Process",
-                        multiprocessing.dummy.Process)
-
     # Reload the base class "Pipe"
     import ReactOBus.utils
     imp.reload(ReactOBus.utils)
@@ -59,65 +55,70 @@ def test_zmq_push(monkeypatch, tmpdir):
     # Replace zmq.Context.instance()
     imp.reload(zmq)
 
-    class MockZMQSocket(object):
-        def __init__(self, socket, count):
-            self.socket = socket
-            self.count = count
-
-        def recv_multipart(self):
-            self.count -= 1
-            if self.count:
-                return self.socket.recv_multipart()
-            else:
-                raise IndexError
-
-        def setsockopt(self, key, value):
-            self.socket.setsockopt(key, value)
-
-        def connect(self, addr):
-            self.socket.connect(addr)
-
-    class MockZMQInstance(object):
-        def __init__(self):
-            self.instance = zmq.Context.instance()
-
-        def __call__(self):
-            return self
-
-        def socket(self, socket_type):
-            socket = self.instance.socket(socket_type)
-            if socket_type == zmq.SUB:
-                return MockZMQSocket(socket, 2)
-            else:
-                return socket
-
-    mock_zmq_instance = MockZMQInstance()
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_instance)
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
 
     url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
     outbound = "ipc://%s" % tmpdir.join("ReactOBus.test.outbound")
 
-    # Listen to events
-    ctx = zmq.Context.instance()
-    pull = ctx.socket(zmq.PULL)
-    pull.bind(url)
+    # Create the sockets and the data
+    push = zmq_instance.socket(zmq.PUSH)
+    sub = zmq_instance.socket(zmq.SUB)
 
-    # Publish events
-    pub = ctx.socket(zmq.PUB)
-    pub.bind(outbound)
+    # send an invalid message then a valid one
+    data = [[b"test"],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"]]
+    sub.recv.extend(data)
 
     p = ZMQPush("push", {"url": url}, outbound)
-    p.start()
-    # Sleep to give sub socket some time to connect
-    import time
-    time.sleep(1)
+    with pytest.raises(IndexError):
+        p.run()
 
-    # Send a valid message
-    orig_msg = [b"org.reactobus.test", b"uuid", b"2016-11-15",
-                b"testing", b"{}"]
-    pub.send_multipart(orig_msg)
+    assert sub.connected and not sub.bound
+    assert sub.url == outbound
+    assert sub.recv == []
 
-    msg = pull.recv_multipart()
-    assert msg == orig_msg
+    assert push.connected and not push.bound
+    assert push.url == url
+    assert push.send == data
 
-    p.join()
+
+def test_zmq_pub(monkeypatch, tmpdir):
+    # Reload the base class "Pipe"
+    import ReactOBus.utils
+    imp.reload(ReactOBus.utils)
+    import ReactOBus.outputs
+    imp.reload(ReactOBus.outputs)
+    from ReactOBus.outputs import ZMQPub
+
+    # Replace zmq.Context.instance()
+    imp.reload(zmq)
+
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
+
+    url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
+    outbound = "ipc://%s" % tmpdir.join("ReactOBus.test.outbound")
+
+    # Create the sockets and the data
+    pub = zmq_instance.socket(zmq.PUB)
+    sub = zmq_instance.socket(zmq.SUB)
+
+    # send an invalid message then a valid one
+    data = [[b"test"],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"]]
+    sub.recv.extend(data)
+
+    p = ZMQPub("pub", {"url": url}, outbound)
+    with pytest.raises(IndexError):
+        p.run()
+
+    assert sub.connected and not sub.bound
+    assert sub.url == outbound
+    assert sub.recv == []
+
+    assert pub.bound and not pub.connected
+    assert pub.url == url
+    assert pub.send == data
