@@ -19,7 +19,7 @@ core:
   outbound: ipc:///tmp/ReactOBus.outbound
 
 reactor:
-  workers: 10   # Not used for the moment
+  workers: 10
   rules:
   - name: org.reactobus
     match:
