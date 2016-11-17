@@ -71,9 +71,9 @@ def test_reactor(monkeypatch):
     }
     r = Reactor(options, "inproc://test")
     sub.recv = [
-        ["org.reactobus.lava", "uuid", "2016", "lavauser", "{}"],
-        ["org.reactobus.lav", "uuid", "2016", "lavauser", "{}"],
-        ["org.reactobus.lava", ""]
+        [b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"org.reactobus.lav", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"org.reactobus.lava", b""]
     ]
     with pytest.raises(IndexError):
         r.run()

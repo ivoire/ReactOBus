@@ -17,10 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
+import json
 import logging
-from setproctitle import setproctitle
 import multiprocessing
 import re
+from setproctitle import setproctitle
 import subprocess
 import threading
 import zmq
@@ -116,10 +117,12 @@ class Worker(threading.Thread):
             try:
                 matcher_index = int(msg[0])
                 (topic, uuid, dt, username, data) = msg[1:]
+                data_parsed = json.loads(u(data))
                 LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
-                self.matchers[matcher_index].run(topic, uuid, dt, username, data)
-            except ValueError:
-                LOG.error("Invalid message")
+                self.matchers[matcher_index].run(u(topic), u(uuid), u(dt),
+                                                 u(username), data_parsed)
+            except (json.JSONDecodeError, ValueError):
+                LOG.error("Invalid message %s", msg)
 
 
 class Reactor(multiprocessing.Process):
@@ -159,21 +162,22 @@ class Reactor(multiprocessing.Process):
         while True:
             msg = self.sub.recv_multipart()
             try:
-                (topic, uuid, datetime, username, data) = (u(m) for m in msg)
-            except (IndexError, ValueError):
+                (topic, uuid, datetime, username, data) = msg[:]
+                data_parsed = json.loads(u(data))
+            except (IndexError, json.JSONDecodeError, ValueError):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
-            variables = {"topic": topic,
-                         "uuid": uuid,
-                         "datetime": datetime,
-                         "username": username}
+            variables = {"topic": u(topic),
+                         "uuid": u(uuid),
+                         "datetime": u(datetime),
+                         "username": u(username)}
             for (i, m) in enumerate(self.matchers):
-                if m.match(variables, data):
+                if m.match(variables, data_parsed):
                     LOG.debug("%s matching %s", msg, m.name)
                     self.ctrl.send_multipart([b(str(i)),
-                                              b(topic),
-                                              b(uuid),
-                                              b(datetime),
-                                              b(username),
-                                              b(data)])
+                                              topic,
+                                              uuid,
+                                              datetime,
+                                              username,
+                                              data])
