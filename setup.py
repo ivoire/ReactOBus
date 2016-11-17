@@ -19,12 +19,24 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 from setuptools import setup
+import subprocess
+import sys
+
+
+# Generate the long description from README.md
+try:
+    long_desc = subprocess.check_output(["pandoc", "-t", "rst",
+                                         "README.md"]).decode('utf-8')
+except FileNotFoundError:
+    sys.stderr.write("Unable to generate the long description from README.md.\n"
+                     "Is 'pandoc' available?\n")
+    sys.exit(1)
 
 setup(
     name="ReactOBus",
     version="0.1",
     description="A message broker to create software bus over the network",
-    long_description=open('README.md', 'r').read(),
+    long_description=long_desc,
     url="https://github.com/ivoire/ReactOBus",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
