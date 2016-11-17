@@ -17,51 +17,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
-import multiprocessing
-import multiprocessing.dummy
+import pytest
 import time
 import zmq
 
-
-class MockZMQSocket(object):
-    def __init__(self, socket, count):
-        self.socket = socket
-        self.count = count
-
-    def recv_multipart(self):
-        self.count -= 1
-        if self.count:
-            return self.socket.recv_multipart()
-        else:
-            raise IndexError
-
-    def bind(self, addr):
-        self.socket.bind(addr)
-
-
-class MockZMQInstance(object):
-    def __init__(self):
-        self.instance = zmq.Context.instance()
-
-    def __call__(self):
-        return self
-
-    def socket(self, socket_type):
-        socket = self.instance.socket(socket_type)
-        if socket_type == zmq.PULL:
-            return MockZMQSocket(socket, 2)
-        else:
-            return socket
+from . import mock
 
 
 def test_core(monkeypatch, tmpdir):
-    # Replace multiprocessing by threading
-    monkeypatch.setattr(multiprocessing, "Process",
-                        multiprocessing.dummy.Process)
-
     # Replace zmq.Context.instance()
-    mock_zmq_instance = MockZMQInstance()
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_instance)
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
 
     from ReactOBus.core import Core
 
@@ -69,26 +35,24 @@ def test_core(monkeypatch, tmpdir):
     inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")
     outbound = "ipc://%s" % tmpdir.join("ReactOBus.test.outbound")
 
+    # Create the sockets and the data
+    pull = zmq_instance.socket(zmq.PULL)
+    pub = zmq_instance.socket(zmq.PUB)
+
+    data = [[b"tests.1"],
+            [b"tests.2", "some data"],
+            [b"tests.3", "something", "else"],
+            [],
+            [b"tests.5"]]
+    pull.recv.extend(data)
+
     # Start the proxy
     core = Core(inbound, outbound)
-    core.start()
+    with pytest.raises(IndexError):
+        core.run()
 
-    # Listen for events
-    ctx = zmq.Context.instance()
-    sub = ctx.socket(zmq.SUB)
-    sub.setsockopt(zmq.SUBSCRIBE, b"")
-    sub.connect(outbound)
-    time.sleep(1)
-
-    # Send events
-    push = ctx.socket(zmq.PUSH)
-    push.connect(inbound)
-
-    push.send_multipart([b"test"])
-
-    msg = sub.recv_multipart()
-    assert len(msg) == 1
-    assert msg[0] == b"test"
-
-    # Wait for the thread to throw an IndexError exception
-    core.join()
+    assert len(pull.recv) == 0
+    assert len(pull.send) == 0
+    assert len(pub.send) == 5
+    assert pub.send == data
+    assert len(pub.recv) == 0
