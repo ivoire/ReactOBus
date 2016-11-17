@@ -41,12 +41,12 @@ class ZMQSock(object):
         self.opts[key] = value
 
     def connect(self, url):
-        assert self.sock_type in [zmq.PUSH, zmq.SUB]
+        assert self.sock_type in [zmq.DEALER, zmq.PUSH, zmq.SUB]
         self.url = url
         self.connected = True
 
     def bind(self, url):
-        assert self.sock_type in [zmq.PULL, zmq.PUB]
+        assert self.sock_type in [zmq.DEALER, zmq.PUB, zmq.PULL]
         self.url = url
         self.bound = True
 

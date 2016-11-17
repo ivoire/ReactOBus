@@ -17,41 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
-from ReactOBus.reactor import Worker
-
-import time
+import pytest
 import zmq
 
-
-class MockZMQSocket(object):
-    def __init__(self, socket, count):
-        self.socket = socket
-        self.count = count
-
-    def recv_multipart(self):
-        self.count -= 1
-        if self.count:
-            return self.socket.recv_multipart()
-        else:
-            raise IndexError
-
-    def connect(self, addr):
-        self.socket.connect(addr)
-
-
-class MockZMQInstance(object):
-    def __init__(self):
-        self.instance = zmq.Context.instance()
-
-    def __call__(self):
-        return self
-
-    def socket(self, socket_type):
-        socket = self.instance.socket(socket_type)
-        if socket_type == zmq.DEALER:
-            return MockZMQSocket(socket, 3)
-        else:
-            return socket
+from ReactOBus.reactor import Worker
+from . import mock
 
 
 class Matcher(object):
@@ -66,37 +36,42 @@ class Matcher(object):
 
 def test_worker(monkeypatch):
     # Replace zmq.Context.instance()
-    mock_zmq_instance = MockZMQInstance()
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_instance)
-
-    # Create the socket to send events
-    ctx = zmq.Context.instance()
-    push = ctx.socket(zmq.PUSH)
-    push.bind("inproc://workers")
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
 
     # Create the matchers
     matchers = [Matcher(), Matcher(), Matcher()]
-
     w = Worker(matchers)
-    w.start()
+    # Run for nothing to create the sockets
+    with pytest.raises(IndexError):
+        w.run()
 
-    # Push jobs
-    time.sleep(1)
-    push.send_multipart([b"0", b"org.reactobus.test", b"", b"", b"", b""])
-    push.send_multipart([b"2", b"org.reactobus.test", b"", b"", b"", b""])
-    w.join()
+    dealer = zmq_instance.socks[zmq.DEALER]
+    assert dealer.connected and not dealer.bound
+
+    # Create some work
+    data = [[b"0", b"org.reactobus.test", b"", b"", b"", b""],
+            [b"2", b"org.reactobus.test", b"", b"", b"", b""]]
+    dealer.recv = data
+
+    with pytest.raises(IndexError):
+        w.run()
+
     assert matchers[0].runned
     assert not matchers[1].runned
     assert matchers[2].runned
+    assert dealer.recv == []
 
     # Send invalid messages
     matchers = [Matcher(), Matcher(), Matcher()]
     w = Worker(matchers)
-    w.start()
-    time.sleep(1)
-    push.send_multipart([b"a", b"org.reactobus.test", b"", b"", b"", b""])
-    push.send_multipart([b"2", b"org.reactobus.test", b"", b"", b""])
-    w.join()
+
+    data = [[b"a", b"org.reactobus.test", b"", b"", b"", b""],
+            [b"2", b"org.reactobus.test", b"", b"", b""]]
+    dealer.recv = data
+    with pytest.raises(IndexError):
+        w.run()
     assert not matchers[0].runned
     assert not matchers[1].runned
     assert not matchers[2].runned
+    assert dealer.recv == []

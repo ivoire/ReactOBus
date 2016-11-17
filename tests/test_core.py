@@ -18,7 +18,6 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import pytest
-import time
 import zmq
 
 from . import mock

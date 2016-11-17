@@ -20,44 +20,7 @@
 import pytest
 import zmq
 
-
-class ZMQMockSocket(object):
-    def __init__(self):
-        self.connected = False
-        self.opts = {}
-        self.url = None
-        self.msgs = []
-        self.send_msgs = []
-
-    def setsockopt(self, key, value):
-        self.opts[key] = value
-
-    def connect(self, url):
-        self.connected = True
-        self.url = url
-
-    def bind(self, url):
-        self.connected = True
-        self.url = url
-
-    def recv_multipart(self):
-        return self.msgs.pop(0)
-
-    def send_multipart(self, msg):
-        self.send_msgs.append(msg)
-
-
-class ZMQMock(object):
-    def __init__(self):
-        self.socks = {}
-
-    def __call__(self):
-        return self
-
-    def socket(self, sock_type):
-        if sock_type not in self.socks:
-            self.socks[sock_type] = ZMQMockSocket()
-        return self.socks[sock_type]
+from . import mock
 
 
 class MockWorker(object):
@@ -71,8 +34,8 @@ class MockWorker(object):
 
 def test_reactor(monkeypatch):
     # Replace zmq.Context.instance()
-    zmq_mock = ZMQMock()
-    monkeypatch.setattr(zmq.Context, "instance", zmq_mock)
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
     import ReactOBus.reactor
     monkeypatch.setattr(ReactOBus.reactor, "Worker", MockWorker)
 
@@ -85,13 +48,16 @@ def test_reactor(monkeypatch):
     r = Reactor(options, "inproc://test")
     with pytest.raises(IndexError):
         r.run()
-    assert zmq_mock.socks[zmq.SUB].connected is True
-    assert zmq_mock.socks[zmq.SUB].url == "inproc://test"
-    assert zmq_mock.socks[zmq.SUB].opts == {zmq.SUBSCRIBE: b''}
-    assert zmq_mock.socks[zmq.DEALER].connected is True
-    assert zmq_mock.socks[zmq.DEALER].opts == {}
-    assert zmq_mock.socks[zmq.DEALER].url == "inproc://workers"
-    assert len(zmq_mock.socks[zmq.DEALER].send_msgs) == 0
+    sub = zmq_instance.socks[zmq.SUB]
+    dealer = zmq_instance.socks[zmq.DEALER]
+
+    assert sub.connected and not sub.bound
+    assert sub.url == "inproc://test"
+    assert sub.opts == {zmq.SUBSCRIBE: b''}
+
+    assert dealer.bound and not dealer.connected
+    assert dealer.url == "inproc://workers"
+    assert dealer.recv == []
 
     options = {
         "rules": [{"name": "first test",
@@ -104,7 +70,7 @@ def test_reactor(monkeypatch):
         "workers": 2
     }
     r = Reactor(options, "inproc://test")
-    zmq_mock.socks[zmq.SUB].msgs = [
+    sub.recv = [
         ["org.reactobus.lava", "uuid", "2016", "lavauser", "{}"],
         ["org.reactobus.lav", "uuid", "2016", "lavauser", "{}"],
         ["org.reactobus.lava", ""]
@@ -117,13 +83,6 @@ def test_reactor(monkeypatch):
     assert len(r.workers) == 2
     assert r.workers[0].started
     assert r.workers[1].started
-    assert zmq_mock.socks[zmq.SUB].connected is True
-    assert zmq_mock.socks[zmq.SUB].url == "inproc://test"
-    assert zmq_mock.socks[zmq.SUB].opts == {zmq.SUBSCRIBE: b''}
-    assert zmq_mock.socks[zmq.DEALER].connected is True
-    assert zmq_mock.socks[zmq.DEALER].opts == {}
-    assert zmq_mock.socks[zmq.DEALER].url == "inproc://workers"
-    assert len(zmq_mock.socks[zmq.DEALER].send_msgs) == 1
-    assert zmq_mock.socks[zmq.DEALER].send_msgs[0] == [b"0", b"org.reactobus.lava",
-                                                       b"uuid", b"2016",
-                                                       b"lavauser", b"{}"]
+    assert sub.recv == []
+    assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
+                            b"2016", b"lavauser", b"{}"]]
