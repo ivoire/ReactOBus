@@ -18,10 +18,10 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 import imp
-import multiprocessing
-import multiprocessing.dummy
 import pytest
 import zmq
+
+from . import mock
 
 
 def test_select():
@@ -45,10 +45,6 @@ def test_zmq_class():
 
 
 def test_zmq_pull(monkeypatch, tmpdir):
-    # Replace multiprocessing by threading
-    monkeypatch.setattr(multiprocessing, "Process",
-                        multiprocessing.dummy.Process)
-
     # Reload the base class "Pipe"
     import ReactOBus.utils
     imp.reload(ReactOBus.utils)
@@ -59,62 +55,73 @@ def test_zmq_pull(monkeypatch, tmpdir):
     # Replace zmq.Context.instance()
     imp.reload(zmq)
 
-    class MockZMQSocket(object):
-        def __init__(self, socket, count):
-            self.socket = socket
-            self.count = count
-            self.mocked = False
-
-        def recv_multipart(self):
-            self.count -= 1
-            if not self.mocked or self.count:
-                return self.socket.recv_multipart()
-            else:
-                raise IndexError
-
-        def bind(self, addr):
-            self.mocked = bool(addr[-4:] == "push")
-            self.socket.bind(addr)
-
-    class MockZMQInstance(object):
-        def __init__(self):
-            self.instance = zmq.Context.instance()
-
-        def __call__(self):
-            return self
-
-        def socket(self, socket_type):
-            socket = self.instance.socket(socket_type)
-            if socket_type == zmq.PULL:
-                return MockZMQSocket(socket, 3)
-            else:
-                return socket
-
-    mock_zmq_instance = MockZMQInstance()
-    monkeypatch.setattr(zmq.Context, "instance", mock_zmq_instance)
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
 
     url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
     inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")
 
+    # Create the sockets and the data
+    pull = zmq_instance.socket(zmq.PULL)
+    push = zmq_instance.socket(zmq.PUSH)
+
+    # send an invalid message then a valid one
+    data = [[b"test"],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"]]
+    pull.recv.extend(data)
+
     p = ZMQPull("pull", {"url": url}, inbound)
-    p.start()
+    with pytest.raises(IndexError):
+        p.run()
 
-    # Listen to events
-    ctx = zmq.Context.instance()
-    pull = ctx.socket(zmq.PULL)
-    pull.bind(inbound)
-    # Send events
-    push = ctx.socket(zmq.PUSH)
-    push.connect(url)
+    assert pull.bound and not pull.connected
+    assert pull.url == url
+    assert pull.recv == []
 
-    # Send an invalid message that will be dropped
-    push.send_multipart([b"test"])
-    # Send a valid message
-    orig_msg = [b"org.reactobus.test", b"uuid", b"2016-11-15",
-                b"testing", b"{}"]
-    push.send_multipart(orig_msg)
+    assert push.url == inbound
+    assert push.connected and not push.bound
+    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
+                          b"testing", b"{}"]]
 
-    msg = pull.recv_multipart()
-    assert msg == orig_msg
 
-    p.join()
+def test_zmq_sub(monkeypatch, tmpdir):
+    # Reload the base class "Pipe"
+    import ReactOBus.utils
+    imp.reload(ReactOBus.utils)
+    import ReactOBus.inputs
+    imp.reload(ReactOBus.inputs)
+    from ReactOBus.inputs import ZMQSub
+
+    # Replace zmq.Context.instance()
+    imp.reload(zmq)
+
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
+
+    url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
+    inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")
+
+    # Create the sockets and the data
+    sub = zmq_instance.socket(zmq.SUB)
+    push = zmq_instance.socket(zmq.PUSH)
+
+    # send an invalid message then a valid one
+    data = [[b"test"],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"]]
+    sub.recv.extend(data)
+
+    p = ZMQSub("pull", {"url": url}, inbound)
+    with pytest.raises(IndexError):
+        p.run()
+
+    assert sub.connected and not sub.bound
+    assert sub.url == url
+    assert sub.opts == {zmq.SUBSCRIBE: b""}
+    assert sub.recv == []
+
+    assert push.url == inbound
+    assert push.connected and not push.bound
+    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
+                          b"testing", b"{}"]]
