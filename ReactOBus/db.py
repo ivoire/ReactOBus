@@ -25,6 +25,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from setproctitle import setproctitle
+import time
 import zmq
 from zmq.utils.strtypes import u
 
@@ -52,51 +53,69 @@ class DB(multiprocessing.Process):
         self.outbound = outbound
         self.engine = None
         self.sessions = None
+        self.messages = []
 
     def setup(self):
         setproctitle("ReactOBus [db]")
+        # Subscribe to outbound
         context = zmq.Context.instance()
         self.sub = context.socket(zmq.SUB)
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
         LOG.debug("Connecting to outbound (%s)", self.outbound)
         self.sub.connect(self.outbound)
+        # Add a poller for the subscription
+        self.poller = zmq.Poller()
+        self.poller.register(self.sub, zmq.POLLIN)
 
-        # Setup sqlalchemy
+        # Setup SQLAlchemy
         self.engine = create_engine(self.options["url"])
         Base.metadata.create_all(self.engine)
         self.sessions = sessionmaker(bind=self.engine)
 
+    def save_to_db(self):
+        session = self.sessions()
+        max_db_commit_retry = 3
+        # Retry the database commit
+        err_msg = ""
+        for retry in range(1, max_db_commit_retry + 1):
+            try:
+                session.bulk_save_objects(self.messages)
+                session.commit()
+                self.messages = []
+                return
+            except SQLAlchemyError as err:
+                err_msg = str(err)
+        # Impossible to commit the message
+        LOG.error("Unable to commit to the database, "
+                  "dropping the message")
+        LOG.error("Database error: %s", err_msg)
+
     def run(self):
         self.setup()
 
-        max_db_commit_retry = 3
+        # Create a session
+        last_save = time.time()
+        self.messages = []
         while True:
-            msg = self.sub.recv_multipart()
-            try:
-                (topic, uuid, dt, username, data) = (u(m) for m in msg)
-                dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
-            except ValueError:
-                LOG.error("Invalid message: %s", msg)
-                continue
-
-            # Save into the database
-            try:
-                session = self.sessions()
-                message = Message(topic=topic, uuid=uuid, datetime=dt,
-                                  username=username, data=data)
-                session.add(message)
-            except SQLAlchemyError as err:
-                LOG.error("Unable to build the new message row: %s", err)
-                continue
-
-            # Retry the database commit
-            for retry in range(1, max_db_commit_retry + 1):
+            sockets = dict(self.poller.poll(1000))
+            if sockets.get(self.sub) == zmq.POLLIN:
+                msg = self.sub.recv_multipart()
                 try:
-                    session.commit()
+                    (topic, uuid, dt, username, data) = (u(m) for m in msg)
+                    dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
+                    self.messages.append(Message(topic=topic, uuid=uuid,
+                                                 datetime=dt,
+                                                 username=username, data=data))
+                except ValueError:
+                    LOG.error("Invalid message: %s", msg)
+                    continue
                 except SQLAlchemyError as err:
-                    if retry == max_db_commit_retry:
-                        LOG.error("Unable to commit to the database, "
-                                  "dropping the message")
-                        LOG.error("Database error: %s", err)
-                else:
-                    break
+                    LOG.error("Unable to build the new message row: %s", err)
+                    continue
+
+            # Save to DB only every one second
+            now = time.time()
+            if len(self.messages) >= 1000 or now - last_save > 1:
+                LOG.info("saving to db")
+                self.save_to_db()
+                last_save = now

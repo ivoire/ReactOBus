@@ -20,6 +20,15 @@
 import zmq
 
 
+class ZMQPoller(object):
+    def register(self, sock, event):
+        self.sock = sock
+        self.event = event
+
+    def poll(self, timeout):
+        return {self.sock: self.event}
+
+
 class ZMQSock(object):
     def __init__(self, sock_type):
         self.sock_type = sock_type

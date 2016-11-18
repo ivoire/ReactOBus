@@ -32,6 +32,7 @@ from . import mock
 def test_run(monkeypatch, tmpdir):
     zmq_instance = mock.ZMQContextInstance()
     monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
+    monkeypatch.setattr(zmq, "Poller", mock.ZMQPoller)
 
     from ReactOBus.db import DB, Message
 
@@ -73,6 +74,8 @@ def test_run(monkeypatch, tmpdir):
                  "lavaserver", json.dumps({})]]
     with pytest.raises(IndexError):
         db.run()
+    # Force the databse flush
+    db.save_to_db()
     assert len(sub.recv) == 0
 
     # Check that the db is empty
@@ -88,13 +91,14 @@ class SessionMock(object):
     def __init__(self):
         self.messages = 0
         self.commits = 0
-        self.raise_on_add = False
+        self.raise_on_bulk = False
 
-    def add(self, message):
-        if self.raise_on_add:
+    def bulk_save_objects(self, messages):
+        if self.raise_on_bulk:
+            self.messages = 0
             raise SQLAlchemyError
         else:
-            self.messages += 1
+            self.messages = len(messages)
 
     def commit(self):
         self.commits += 1
@@ -118,6 +122,7 @@ def test_errors(monkeypatch, tmpdir):
     def mock_sessionmaker(bind):
         return sessions_mock
     monkeypatch.setattr(sqlalchemy.orm, "sessionmaker", mock_sessionmaker)
+    monkeypatch.setattr(zmq, "Poller", mock.ZMQPoller)
 
     # Reload the module to apply the monkey patching
     import ReactOBus.db
@@ -144,9 +149,10 @@ def test_errors(monkeypatch, tmpdir):
     # Run with two messages
     with pytest.raises(IndexError):
         db.run()
+    db.save_to_db()
     assert len(sub.recv) == 0
     assert sessions_mock.session_mock.messages == 2
-    assert sessions_mock.session_mock.commits == 6
+    assert sessions_mock.session_mock.commits == 3
 
     # Re-run with two messages but raise on session.add()
     sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
@@ -155,11 +161,12 @@ def test_errors(monkeypatch, tmpdir):
                 ["org.reactobus.1", str(uuid.uuid1()),
                  datetime.datetime.utcnow().isoformat(),
                  "lavaserver", json.dumps({})]]
-    sessions_mock.session_mock.raise_on_add = True
-    sessions_mock.session_mock.messages = 0
+    sessions_mock.session_mock.raise_on_bulk = True
+    sessions_mock.session_mock.messages = 4212
     sessions_mock.session_mock.commits = 0
     with pytest.raises(IndexError):
         db.run()
+    db.save_to_db()
     assert len(sub.recv) == 0
     assert sessions_mock.session_mock.messages == 0
     assert sessions_mock.session_mock.commits == 0
