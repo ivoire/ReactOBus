@@ -95,7 +95,8 @@ class DB(multiprocessing.Process):
                     session.commit()
                 except SQLAlchemyError as err:
                     if retry == max_db_commit_retry:
-                        LOG.error("Unable to commit to the database, dropping the message")
+                        LOG.error("Unable to commit to the database, "
+                                  "dropping the message")
                         LOG.error("Database error: %s", err)
                 else:
                     break

@@ -101,13 +101,18 @@ def test_data_matching():
 
 def test_lookup():
     assert Matcher.lookup("username", {"username": "kernel"}, {}) == "kernel"
-    assert Matcher.lookup("msg", {"username": "kernel", "msg": "hello"}, {}) == "hello"
+    assert Matcher.lookup("msg",
+                          {"username": "kernel",
+                           "msg": "hello"}, {}) == "hello"
 
     assert Matcher.lookup("data", {"msg": "something"}, {}) == {}
-    assert Matcher.lookup("data", {"msg": "something"}, {"hello": "world"}) == {"hello": "world"}
+    assert Matcher.lookup("data", {"msg": "something"},
+                          {"hello": "world"}) == {"hello": "world"}
 
-    assert Matcher.lookup("data.key", {"msg": "something"}, {"key": "value"}) == "value"
-    assert Matcher.lookup("data.hello", {"msg": "something"}, {"hello": "world"}) == "world"
+    assert Matcher.lookup("data.key", {"msg": "something"},
+                          {"key": "value"}) == "value"
+    assert Matcher.lookup("data.hello", {"msg": "something"},
+                          {"hello": "world"}) == "world"
 
     with pytest.raises(KeyError):
         Matcher.lookup("msg", {}, {})
@@ -123,22 +128,28 @@ def test_build_args():
     m = Matcher(rule_1)
 
     # Test for classical substitution
-    (args, stdin) = m.build_args("org.reactobus.lava.hello", "uuid", "", "lavauser", {})
-    assert args == [m.binary, "topic", "org.reactobus.lava.hello", "username", "lavauser"]
+    (args, stdin) = m.build_args("org.reactobus.lava.hello", "uuid", "",
+                                 "lavauser", {})
+    assert args == [m.binary, "topic", "org.reactobus.lava.hello",
+                    "username", "lavauser"]
     assert stdin == ''
-    (args, stdin) = m.build_args("org.reactobus.lava.something", "uuid", "erty", "kernel-ci", {})
-    assert args == [m.binary, "topic", "org.reactobus.lava.something", "username", "kernel-ci"]
+    (args, stdin) = m.build_args("org.reactobus.lava.something", "uuid",
+                                 "erty", "kernel-ci", {})
+    assert args == [m.binary, "topic", "org.reactobus.lava.something",
+                    "username", "kernel-ci"]
     assert stdin == ''
 
     # Test for data.* substitution
     m = Matcher(rule_3)
-    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser",
+                                 {"submitter": "health"})
     assert args == [m.binary, "topic", "org.reactobus", "submitter", "health"]
     assert stdin == ''
 
     # Without args
     m = Matcher(rule_6)
-    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser", {"submitter": "health"})
+    (args, stdin) = m.build_args("org.reactobus", "uuid", "", "lavauser",
+                                 {"submitter": "health"})
     assert args == [m.binary]
     assert stdin == ''
 
@@ -162,7 +173,8 @@ def test_build_args_errors():
 
     m = Matcher(rule_3)
     with pytest.raises(KeyError):
-        m.build_args("org.reactobus", "uuid", "", "lavauser", {"username": "health"})
+        m.build_args("org.reactobus", "uuid", "", "lavauser",
+                     {"username": "health"})
 
 
 def test_run(monkeypatch):
@@ -183,38 +195,48 @@ def test_run(monkeypatch):
     m = Matcher(rule_1)
 
     m.run("org.reactobus", "uuid", "0", "lavauser", {})
-    assert m_args == [m.binary, "topic", "org.reactobus", "username", "lavauser"]
+    assert m_args == [m.binary, "topic", "org.reactobus", "username",
+                      "lavauser"]
     assert m_input == ""
     assert m_timeout == 1
 
     m.run("org.reactobus.test", "uuid", "0", "kernel", {})
-    assert m_args == [m.binary, "topic", "org.reactobus.test", "username", "kernel"]
+    assert m_args == [m.binary, "topic", "org.reactobus.test", "username",
+                      "kernel"]
     assert m_input == ""
     assert m_timeout == 1
 
     m = Matcher(rule_7)
-    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"submitter": "myself"})
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver",
+          {"submitter": "myself"})
     assert m_args == [m.binary, "stdin", "myself"]
     assert m_input == "hello\norg.reactobus.test\nmyself"
     assert m_timeout == 4
 
     m_args = None
-    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver",
+          {"something": "myself"})
     assert m_args is None
 
 
 def test_run_raise_oserror(monkeypatch):
-    def mock_check_output_raise_oserror(args, stderr, universal_newlines, input, timeout):
+    def mock_check_output_raise_oserror(args, stderr, universal_newlines,
+                                        input, timeout):
         raise OSError
-    monkeypatch.setattr(subprocess, "check_output", mock_check_output_raise_oserror)
+    monkeypatch.setattr(subprocess, "check_output",
+                        mock_check_output_raise_oserror)
     m = Matcher(rule_1)
-    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver",
+          {"something": "myself"})
 
 
 def test_run_raise_timeout(monkeypatch):
-    def mock_check_output_raise_oserror(args, stderr, universal_newlines, input, timeout):
+    def mock_check_output_raise_oserror(args, stderr, universal_newlines,
+                                        input, timeout):
         import subprocess
         raise subprocess.TimeoutExpired(args[0], timeout)
-    monkeypatch.setattr(subprocess, "check_output", mock_check_output_raise_oserror)
+    monkeypatch.setattr(subprocess, "check_output",
+                        mock_check_output_raise_oserror)
     m = Matcher(rule_1)
-    m.run("org.reactobus.test", "uuid", "0", "lavaserver", {"something": "myself"})
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver",
+          {"something": "myself"})

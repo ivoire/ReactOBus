@@ -20,7 +20,7 @@
 import logging
 from setproctitle import setproctitle
 import zmq
-import zmq.auth
+from zmq.auth import load_certificate
 from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import u
 
@@ -96,7 +96,7 @@ class ZMQPull(ZMQ):
         self.auth = ThreadAuthenticator(self.context)
         self.auth.start()
         self.LOG.debug("Server keys in %s", self.secure_config["self"])
-        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["self"])
+        sock_pub, sock_priv = load_certificate(self.secure_config["self"])
         if self.secure_config.get("clients", None) is not None:
             self.LOG.debug("Client certificates in %s",
                            self.secure_config["clients"])
@@ -123,8 +123,8 @@ class ZMQSub(ZMQ):
     def secure_setup(self):
         # Load certificates
         # TODO: handle errors
-        sock_pub, sock_priv = zmq.auth.load_certificate(self.secure_config["self"])
-        server_public, _ = zmq.auth.load_certificate(self.secure_config["server"])
+        sock_pub, sock_priv = load_certificate(self.secure_config["self"])
+        server_public, _ = load_certificate(self.secure_config["server"])
         self.sock.curve_publickey = sock_pub
         self.sock.curve_secretkey = sock_priv
         self.sock.curve_serverkey = server_public

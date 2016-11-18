@@ -116,7 +116,8 @@ def main():
     loggrp = parser.add_argument_group('Logging')
     loggrp.add_argument("-l", "--level", default="INFO", type=str,
                         choices=["DEBUG", "ERROR", "INFO", "WARN"],
-                        help="Log level (DEBUG, ERROR, INFO, WARN), default to INFO")
+                        help="Log level (DEBUG, ERROR, INFO, WARN), "
+                             "default to INFO")
     loggrp.add_argument("--log-file", default="-", type=str,
                         help="Log file, use '-' for stdout")
 

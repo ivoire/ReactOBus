@@ -166,8 +166,9 @@ class Reactor(multiprocessing.Process):
             try:
                 (topic, uuid, datetime, username, data) = msg[:]
                 data_parsed = json.loads(u(data))
-            # No need to except JSONDecodeError which is a subclass of ValueError.
-            # Moreover, in python3.4 JSONDecodeError does not exists.
+            # No need to except JSONDecodeError which is a subclass of
+            # ValueError. Moreover, in python3.4 JSONDecodeError does not
+            # exist.
             except ValueError:
                 LOG.error("Invalid message: %s", msg)
                 continue

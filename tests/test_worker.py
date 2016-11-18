@@ -115,7 +115,8 @@ def test_worker_and_matchers(monkeypatch):
               "match": {"field": "data.submitter",
                         "pattern": "kernel-ci"},
               "exec": {"path": "/bin/true",
-                       "args": ["topic", "$topic", "submitter", "$data.submitter"],
+                       "args": ["topic", "$topic", "submitter",
+                                "$data.submitter"],
                        "timeout": 1}}
 
     # Create the matchers
