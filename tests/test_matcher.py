@@ -182,12 +182,12 @@ def test_run(monkeypatch):
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
     m = Matcher(rule_1)
 
-    m.run("org.reactobus", "uuid", "0", "lavauser", "{}")
+    m.run("org.reactobus", "uuid", "0", "lavauser", {})
     assert m_args == [m.binary, "topic", "org.reactobus", "username", "lavauser"]
     assert m_input == ""
     assert m_timeout == 1
 
-    m.run("org.reactobus.test", "uuid", "0", "kernel", "{}")
+    m.run("org.reactobus.test", "uuid", "0", "kernel", {})
     assert m_args == [m.binary, "topic", "org.reactobus.test", "username", "kernel"]
     assert m_input == ""
     assert m_timeout == 1

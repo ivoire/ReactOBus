@@ -73,7 +73,9 @@ def test_reactor(monkeypatch):
     sub.recv = [
         [b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{}"],
         [b"org.reactobus.lav", b"uuid", b"2016", b"lavauser", b"{}"],
-        [b"org.reactobus.lava", b""]
+        [b"org.reactobus.lava", b""],
+        [b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{"],
+        [b"org.reactobus.lava", b"uuid2", b"2016", b"lavauser", b"{}"],
     ]
     with pytest.raises(IndexError):
         r.run()
@@ -85,4 +87,6 @@ def test_reactor(monkeypatch):
     assert r.workers[1].started
     assert sub.recv == []
     assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
+                            b"2016", b"lavauser", b"{}"],
+                           [b"0", b"org.reactobus.lava", b"uuid2",
                             b"2016", b"lavauser", b"{}"]]

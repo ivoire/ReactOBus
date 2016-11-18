@@ -31,6 +31,7 @@ class DummyMatcher(object):
         self.topic = None
 
     def run(self, topic, uuid, dt, username, data):
+        assert not isinstance(data, str)
         self.runned = True
         self.topic = topic
 
@@ -158,3 +159,14 @@ def test_worker_and_matchers(monkeypatch):
 
     assert m_args == ["/bin/true", "topic", "org.linaro.validation",
                       "submitter", "kernel-ci"]
+
+    m_args = []
+    # Create some invalid work for rule_3
+    data = [[b"2", b"org.linaro.validation", b"", b"", b"lavauser",
+             b"{\"submitter: \"kernel-ci\"}"]]
+    dealer.recv = data
+
+    with pytest.raises(IndexError):
+        w.run()
+
+    assert m_args == []
