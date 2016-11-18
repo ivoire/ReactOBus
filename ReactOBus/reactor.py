@@ -95,10 +95,10 @@ class Matcher(object):
             out = subprocess.check_output(args, stderr=subprocess.STDOUT,
                                           universal_newlines=True,
                                           input=stdin_s, timeout=self.timeout)
-        except OSError as err:
-            LOG.error("Unable to run %s (%s)", args, err)
         except subprocess.TimeoutExpired:
             LOG.error("Timeout when running %s", args)
+        except (OSError, subprocess.SubprocessError) as err:
+            LOG.error("Unable to run %s (%s)", args, err)
         else:
             LOG.debug("=> %s", out)
 
