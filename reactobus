@@ -131,6 +131,7 @@ def main():
     start_pipeline(stages)
 
     # Wait for a signal and then quit
+    signal.signal(signal.SIGTERM, lambda signum, frame: {})
     LOG.info("Waiting for a signal")
     try:
         signal.pause()
