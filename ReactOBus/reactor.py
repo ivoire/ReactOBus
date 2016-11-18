@@ -121,7 +121,9 @@ class Worker(threading.Thread):
                 LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
                 self.matchers[matcher_index].run(u(topic), u(uuid), u(dt),
                                                  u(username), data_parsed)
-            except (json.JSONDecodeError, ValueError):
+            # No need to except JSONDecodeError which is a subclass of ValueError.
+            # Moreover, in python3.4 JSONDecodeError does not exists.
+            except ValueError:
                 LOG.error("Invalid message %s", msg)
 
 
@@ -164,7 +166,9 @@ class Reactor(multiprocessing.Process):
             try:
                 (topic, uuid, datetime, username, data) = msg[:]
                 data_parsed = json.loads(u(data))
-            except (IndexError, json.JSONDecodeError, ValueError):
+            # No need to except JSONDecodeError which is a subclass of ValueError.
+            # Moreover, in python3.4 JSONDecodeError does not exists.
+            except ValueError:
                 LOG.error("Invalid message: %s", msg)
                 continue
 

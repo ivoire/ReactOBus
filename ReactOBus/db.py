@@ -75,7 +75,7 @@ class DB(multiprocessing.Process):
             try:
                 (topic, uuid, dt, username, data) = (u(m) for m in msg)
                 dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
-            except (IndexError, ValueError):
+            except ValueError:
                 LOG.error("Invalid message: %s", msg)
                 continue
 
