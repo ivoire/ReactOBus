@@ -79,7 +79,7 @@ class ZMQ(Input):
                 self.LOG.error("Droping invalid message")
                 self.LOG.debug("=> %s", msg)
                 continue
-            self.LOG.debug("topic: %s, data: %s", u(topic), data)
+            self.LOG.debug("topic: %s, data: %s", u(topic), u(data))
             self.push.send_multipart(msg)
 
 

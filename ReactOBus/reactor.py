@@ -116,13 +116,15 @@ class Worker(threading.Thread):
             msg = self.sock.recv_multipart()
             try:
                 matcher_index = int(msg[0])
-                (topic, uuid, dt, username, data) = msg[1:]
-                data_parsed = json.loads(u(data))
-                LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
-                self.matchers[matcher_index].run(u(topic), u(uuid), u(dt),
-                                                 u(username), data_parsed)
-            # No need to except JSONDecodeError which is a subclass of ValueError.
-            # Moreover, in python3.4 JSONDecodeError does not exists.
+                (topic, uuid, dt, username, data) = (u(m) for m in msg[1:])
+                data_parsed = json.loads(data)
+                LOG.debug("Running matcher num %d on %s",
+                          matcher_index, self.name)
+                self.matchers[matcher_index].run(topic, uuid, dt,
+                                                 username, data_parsed)
+            # No need to except JSONDecodeError which is a subclass of
+            # ValueError. Moreover, in python3.4 JSONDecodeError does not
+            # exist.
             except ValueError:
                 LOG.error("Invalid message %s", msg)
 

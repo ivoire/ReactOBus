@@ -28,12 +28,15 @@ from . import mock
 class DummyMatcher(object):
     def __init__(self):
         self.runned = False
-        self.topic = None
 
     def run(self, topic, uuid, dt, username, data):
         assert not isinstance(data, str)
         self.runned = True
         self.topic = topic
+        self.uuid = uuid
+        self.dt = dt
+        self.username = username
+        self.data = data
 
 
 def test_worker(monkeypatch):
@@ -52,16 +55,28 @@ def test_worker(monkeypatch):
     assert dealer.connected and not dealer.bound
 
     # Create some work
-    data = [[b"0", b"org.reactobus.test", b"", b"", b"", b"{}"],
-            [b"2", b"org.reactobus.test", b"", b"", b"", b"{}"]]
+    data = [[b"0", b"org.reactobus.test", b"azertyuiop", b"2024",
+             b"user", b"{}"],
+            [b"2", b"org.reactobus.ci", b"qwertyuiop", b"1789", b"bla",
+             b"{\"hello\": \"world\"}"]]
     dealer.recv = data
 
     with pytest.raises(IndexError):
         w.run()
 
     assert matchers[0].runned
+    assert matchers[0].topic == "org.reactobus.test"
+    assert matchers[0].uuid == "azertyuiop"
+    assert matchers[0].dt == "2024"
+    assert matchers[0].username == "user"
+    assert matchers[0].data == {}
     assert not matchers[1].runned
     assert matchers[2].runned
+    assert matchers[2].topic == "org.reactobus.ci"
+    assert matchers[2].uuid == "qwertyuiop"
+    assert matchers[2].dt == "1789"
+    assert matchers[2].username == "bla"
+    assert matchers[2].data == {"hello": "world"}
     assert dealer.recv == []
 
     # Send invalid messages
@@ -69,7 +84,8 @@ def test_worker(monkeypatch):
     w = Worker(matchers)
 
     data = [[b"a", b"org.reactobus.test", b"", b"", b"", b"{}"],
-            [b"2", b"org.reactobus.test", b"", b"", b""]]
+            [b"2", b"org.reactobus.test", b"", b"", b""],
+            [b"42", b"org.reactobus.test", b"", b"", b"", b"{}"]]
     dealer.recv = data
     with pytest.raises(IndexError):
         w.run()
