@@ -97,7 +97,10 @@ class DB(multiprocessing.Process):
         last_save = time.time()
         self.messages = []
         while True:
-            sockets = dict(self.poller.poll(1000))
+            # Wait for 1000 if self.messages is not empty, overwise, wait for a
+            # new message infinitely
+            timeout = 1000 if self.messages else -1
+            sockets = dict(self.poller.poll(timeout))
             if sockets.get(self.sub) == zmq.POLLIN:
                 msg = self.sub.recv_multipart()
                 try:
@@ -113,7 +116,11 @@ class DB(multiprocessing.Process):
                     LOG.error("Unable to build the new message row: %s", err)
                     continue
 
-            # Save to DB only every one second
+            # Nothing to store in the database
+            if self.messages is []:
+                continue
+
+            # Save to DB every 1000 messages or every seconds
             now = time.time()
             if len(self.messages) >= 1000 or now - last_save > 1:
                 LOG.info("saving to db")
