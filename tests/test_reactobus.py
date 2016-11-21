@@ -19,6 +19,7 @@
 
 import datetime
 import json
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -57,7 +58,7 @@ def test_simple_forward(tmpdir):
     outbound = tmpdir.join("outbound")
     stdout = tmpdir.join("stdout")
     stderr = tmpdir.join("stderr")
-    with open(conf_filename, "w+") as f:
+    with open(conf_filename, "w") as f:
         f.write("inputs:\n")
         f.write("- class: ZMQPull\n")
         f.write("  name: testing-input\n")
@@ -75,7 +76,8 @@ def test_simple_forward(tmpdir):
         f.write("    url: ipc://%s\n" % push_url)
     args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
             "--log-file", "-"]
-    proc = subprocess.Popen(args, stdout=open(str(stdout), "w"),
+    proc = subprocess.Popen(args,
+                            stdout=open(str(stdout), "w"),
                             stderr=open(str(stderr), "w"))
 
     ctx = zmq.Context.instance()
@@ -111,3 +113,84 @@ def test_simple_forward(tmpdir):
     session = sessions()
     assert session.query(Message).count() == 1000
     assert session.query(Message).filter_by(topic="org.reactobus.test.py").count() == 1000
+
+
+def test_reactor(tmpdir):
+    conf_filename = str(tmpdir.join("conf.yaml"))
+    pull_url = tmpdir.join("input.socket")
+    inbound = tmpdir.join("inbound")
+    outbound = tmpdir.join("outbound")
+    stdout = tmpdir.join("stdout")
+    stderr = tmpdir.join("stderr")
+    script = tmpdir.join("script.sh")
+    script_stdin = tmpdir.join("script.stdin")
+    script_args = tmpdir.join("script.args")
+
+    with open(str(script), "w") as f:
+        f.write("#!/bin/sh\n")
+        f.write("cat /dev/stdin > %s\n" % script_stdin)
+        f.write("echo $@ > %s\n" % script_args)
+    os.chmod(str(script), 0o755)
+
+    with open(conf_filename, "w") as f:
+        f.write("inputs:\n")
+        f.write("- class: ZMQPull\n")
+        f.write("  name: testing-input\n")
+        f.write("  options:\n")
+        f.write("    url: ipc://%s\n" % pull_url)
+        f.write("reactor:\n")
+        f.write("  workers: 2\n")
+        f.write("  rules:\n")
+        f.write("  - name: org.videolan.git\n")
+        f.write("    match:\n")
+        f.write("      field: topic\n")
+        f.write("      pattern: ^org\.videolan\.git$\n")
+        f.write("    exec:\n")
+        f.write("      path: %s\n" % script)
+        f.write("      timeout: 1\n")
+        f.write("      args:\n")
+        f.write("      - topic\n")
+        f.write("      - $topic\n")
+        f.write("      - data\n")
+        f.write("      - $data.url\n")
+        f.write("      - stdin:user\n")
+        f.write("      - stdin:$username\n")
+        f.write("      - stdin:url\n")
+        f.write("      - stdin:$data.url\n")
+        f.write("core:\n")
+        f.write("  inbound: ipc://%s\n" % inbound)
+        f.write("  outbound: ipc://%s\n" % outbound)
+    args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+            "--log-file", "-"]
+    proc = subprocess.Popen(args,
+                            stdout=open(str(stdout), "w"),
+                            stderr=open(str(stderr), "w"))
+
+    ctx = zmq.Context.instance()
+    in_sock = ctx.socket(zmq.PUSH)
+    in_sock.connect("ipc://%s" % pull_url)
+
+    # Allow the process sometime to setup and connect
+    time.sleep(1)
+
+    in_sock.send_multipart([b"org.videolan.git",
+                            b(str(uuid.uuid1())),
+                            b(datetime.datetime.utcnow().isoformat()),
+                            b"videolan-git",
+                            b(json.dumps({"url": "https://code.videolan.org",
+                                           "username": "git"}))])
+
+    time.sleep(1)
+    proc.terminate()
+    proc.wait()
+
+    with open(str(script_args), "r") as f:
+        l = f.readlines()
+        assert l == ["topic org.videolan.git data https://code.videolan.org\n"]
+    with open(str(script_stdin), "r") as f:
+        l = f.readlines()
+        assert len(l) == 4
+        assert l[0] == "user\n"
+        assert l[1] == "videolan-git\n"
+        assert l[2] == "url\n"
+        assert l[3] == "https://code.videolan.org"
