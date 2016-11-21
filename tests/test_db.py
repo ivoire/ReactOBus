@@ -139,6 +139,7 @@ def test_errors(monkeypatch, tmpdir):
         db.run()
     sub = zmq_instance.socks[zmq.SUB]
 
+    # Run with two messages
     sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
                  datetime.datetime.utcnow().isoformat(),
                  "lavaserver", json.dumps({})],
@@ -146,7 +147,6 @@ def test_errors(monkeypatch, tmpdir):
                  datetime.datetime.utcnow().isoformat(),
                  "lavaserver", json.dumps({})]]
 
-    # Run with two messages
     with pytest.raises(IndexError):
         db.run()
     db.save_to_db()
@@ -170,3 +170,20 @@ def test_errors(monkeypatch, tmpdir):
     assert len(sub.recv) == 0
     assert sessions_mock.session_mock.messages == 0
     assert sessions_mock.session_mock.commits == 0
+
+    # Re-run with two invalid messages
+    sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
+                 datetime.datetime.utcnow().isoformat(),
+                 "lavaserver"],
+                ["org.reactobus.1", str(uuid.uuid1()),
+                 datetime.datetime.utcnow().isoformat(),
+                 "lavaserver", json.dumps({})]]
+    sessions_mock.session_mock.raise_on_bulk = False
+    sessions_mock.session_mock.messages = 0
+    sessions_mock.session_mock.commits = 0
+    with pytest.raises(IndexError):
+        db.run()
+    db.save_to_db()
+    assert len(sub.recv) == 0
+    assert sessions_mock.session_mock.messages == 1
+    assert sessions_mock.session_mock.commits == 3

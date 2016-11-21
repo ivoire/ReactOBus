@@ -230,6 +230,17 @@ def test_run_raise_oserror(monkeypatch):
           {"something": "myself"})
 
 
+def test_run_raise_subprocesserror(monkeypatch):
+    def mock_check_output_raise_subprocesserror(args, stderr, universal_newlines,
+                                                input, timeout):
+        raise OSError
+    monkeypatch.setattr(subprocess, "check_output",
+                        mock_check_output_raise_subprocesserror)
+    m = Matcher(rule_1)
+    m.run("org.reactobus.test", "uuid", "0", "lavaserver",
+          {"something": "myself"})
+
+
 def test_run_raise_timeout(monkeypatch):
     def mock_check_output_raise_oserror(args, stderr, universal_newlines,
                                         input, timeout):
