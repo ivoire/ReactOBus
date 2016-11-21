@@ -27,6 +27,8 @@ import subprocess
 import time
 import uuid
 import zmq
+from zmq.auth import create_certificates, load_certificate
+from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import b
 
 from ReactOBus.db import Message
@@ -194,3 +196,106 @@ def test_reactor(tmpdir):
         assert l[1] == "vidéolan-git\n"
         assert l[2] == "url\n"
         assert l[3] == "https://code.videolan.org/éêï"
+
+
+def test_encryption(tmpdir):
+    # Create the tmp names
+    conf_filename = str(tmpdir.join("conf.yaml"))
+    pull_url = tmpdir.join("input.pull.socket")
+    pull_cert_dir = tmpdir.mkdir("input.pull")
+    pull_clients_cert_dir = pull_cert_dir.mkdir("clients")
+    sub_url = tmpdir.join("input.sub.socket")
+    sub_cert_dir = tmpdir.mkdir("input.sub")
+    push_url = tmpdir.join("output.push.socket")
+    inbound = tmpdir.join("inbound")
+    outbound = tmpdir.join("outbound")
+    stdout = tmpdir.join("stdout")
+    stderr = tmpdir.join("stderr")
+
+    # Create the certificates
+    create_certificates(str(pull_cert_dir), "pull")
+    create_certificates(str(pull_clients_cert_dir), "client1")
+    create_certificates(str(pull_clients_cert_dir), "client2")
+    create_certificates(str(sub_cert_dir), "sub")
+    create_certificates(str(sub_cert_dir), "sub-server")
+
+    with open(conf_filename, "w") as f:
+        f.write("inputs:\n")
+        f.write("- class: ZMQPull\n")
+        f.write("  name: in-pull\n")
+        f.write("  options:\n")
+        f.write("    url: ipc://%s\n" % pull_url)
+        f.write("    encryption:\n")
+        f.write("      self: %s\n" % pull_cert_dir.join("pull.key_secret"))
+        f.write("      clients: %s\n" % pull_clients_cert_dir)
+        f.write("- class: ZMQSub\n")
+        f.write("  name: in-sub\n")
+        f.write("  options:\n")
+        f.write("    url: ipc://%s\n" % sub_url)
+        f.write("    encryption:\n")
+        f.write("      self: %s\n" % sub_cert_dir.join("sub.key_secret"))
+        f.write("      server: %s\n" % sub_cert_dir.join("sub-server.key"))
+        f.write("core:\n")
+        f.write("  inbound: ipc://%s\n" % inbound)
+        f.write("  outbound: ipc://%s\n" % outbound)
+        f.write("outputs:\n")
+        f.write("- class: ZMQPush\n")
+        f.write("  name: out-push\n")
+        f.write("  options:\n")
+        f.write("    url: ipc://%s\n" % push_url)
+    args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+            "--log-file", "-"]
+    proc = subprocess.Popen(args,
+                            stdout=open(str(stdout), "w"),
+                            stderr=open(str(stderr), "w"))
+
+    # Create the input sockets
+    ctx = zmq.Context.instance()
+    in_sock = ctx.socket(zmq.PUSH)
+    (server_public, _) = load_certificate(str(pull_cert_dir.join("pull.key")))
+    in_sock.curve_serverkey = server_public
+    (client_public, client_private) = load_certificate(str(pull_clients_cert_dir.join("client1.key_secret")))
+    in_sock.curve_publickey = client_public
+    in_sock.curve_secretkey = client_private
+    in_sock.connect("ipc://%s" % pull_url)
+
+    out_sock = ctx.socket(zmq.PULL)
+    out_sock.bind("ipc://%s" % push_url)
+
+    pub_sock = ctx.socket(zmq.PUB)
+    auth = ThreadAuthenticator(ctx)
+    auth.start()
+    auth.configure_curve(domain="*", location=str(sub_cert_dir))
+    (server_public, server_secret) = load_certificate(str(sub_cert_dir.join("sub-server.key_secret")))
+    pub_sock.curve_publickey = server_public
+    pub_sock.curve_secretkey = server_secret
+    pub_sock.curve_server = True
+    pub_sock.bind("ipc://%s" % sub_url)
+
+    # Allow the process sometime to setup and connect
+    time.sleep(1)
+
+    # Send some data
+    data = [b"org.videolan.git",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("videolan-git"),
+            b(json.dumps({"url": "https://code.videolan.org/éêï",
+                          "username": "git"}))]
+    in_sock.send_multipart(data)
+    msg = out_sock.recv_multipart()
+    assert msg == data
+
+    data = [b"org.videolan.git",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("videolan-git"),
+            b(json.dumps({"url": "https://code.videolan.org/éêï",
+                          "username": "git"}))]
+    pub_sock.send_multipart(data)
+    msg = out_sock.recv_multipart()
+    assert msg == data
+
+    # End the process
+    proc.terminate()
+    proc.wait()
