@@ -77,7 +77,7 @@ class DB(multiprocessing.Process):
         max_db_commit_retry = 3
         # Retry the database commit
         err_msg = ""
-        for retry in range(1, max_db_commit_retry + 1):
+        for _ in range(0, max_db_commit_retry):
             try:
                 session.bulk_save_objects(self.messages)
                 session.commit()
