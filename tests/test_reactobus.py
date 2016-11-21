@@ -176,9 +176,9 @@ def test_reactor(tmpdir):
     in_sock.send_multipart([b"org.videolan.git",
                             b(str(uuid.uuid1())),
                             b(datetime.datetime.utcnow().isoformat()),
-                            b"videolan-git",
-                            b(json.dumps({"url": "https://code.videolan.org",
-                                           "username": "git"}))])
+                            b("vidéolan-git"),
+                            b(json.dumps({"url": "https://code.videolan.org/éêï",
+                                          "username": "git"}))])
 
     time.sleep(1)
     proc.terminate()
@@ -186,11 +186,11 @@ def test_reactor(tmpdir):
 
     with open(str(script_args), "r") as f:
         l = f.readlines()
-        assert l == ["topic org.videolan.git data https://code.videolan.org\n"]
+        assert l == ["topic org.videolan.git data https://code.videolan.org/éêï\n"]
     with open(str(script_stdin), "r") as f:
         l = f.readlines()
         assert len(l) == 4
         assert l[0] == "user\n"
-        assert l[1] == "videolan-git\n"
+        assert l[1] == "vidéolan-git\n"
         assert l[2] == "url\n"
-        assert l[3] == "https://code.videolan.org"
+        assert l[3] == "https://code.videolan.org/éêï"
