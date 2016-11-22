@@ -40,17 +40,24 @@ class Matcher(object):
         self.args = rule["exec"]["args"]
 
     @classmethod
+    def dump(cls, value):
+        if isinstance(value, str):
+            return value
+        else:
+            return json.dumps(value)
+
+    @classmethod
     def lookup(cls, name, variables, data):
         # Lookup in variables and fallback to data if the name is of the form
         # "data.key"
         if name in variables:
             return variables[name]
         elif name == "data":
-            return data
+            return cls.dump(data)
         elif name.startswith("data."):
             sub_name = name[5:]
             if sub_name in data:
-                return data[sub_name]
+                return cls.dump(data[sub_name])
         raise KeyError(name)
 
     def match(self, variables, data):

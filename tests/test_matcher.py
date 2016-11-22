@@ -105,14 +105,23 @@ def test_lookup():
                           {"username": "kernel",
                            "msg": "hello"}, {}) == "hello"
 
-    assert Matcher.lookup("data", {"msg": "something"}, {}) == {}
+    # $data
+    assert Matcher.lookup("data", {"msg": "something"}, {}) == "{}"
+    assert Matcher.lookup("data", {"msg": "something"}, "just a string") == "just a string"
     assert Matcher.lookup("data", {"msg": "something"},
-                          {"hello": "world"}) == {"hello": "world"}
+                          {"hello": "world"}) == '{"hello": "world"}'
+    assert Matcher.lookup("data", {"msg": "something"},
+                          ["hello", "world"]) == '["hello", "world"]'
 
+    # $data.key
     assert Matcher.lookup("data.key", {"msg": "something"},
                           {"key": "value"}) == "value"
     assert Matcher.lookup("data.hello", {"msg": "something"},
                           {"hello": "world"}) == "world"
+    assert Matcher.lookup("data.hello", {"msg": "something"},
+                          {"hello": []}) == "[]"
+    assert Matcher.lookup("data.hello", {"msg": "something"},
+                          {"hello": [{"world": 1}, {"wordl": 2}]}) == '[{"world": 1}, {"wordl": 2}]'
 
     with pytest.raises(KeyError):
         Matcher.lookup("msg", {}, {})
