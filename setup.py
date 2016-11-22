@@ -24,8 +24,7 @@ import sys
 
 
 # This text is generated from README.md using pandoc
-long_description = """
-|Build Status| |Coverage Status| |Code Health|
+long_description = """|Build Status| |Coverage Status| |Code Health|
 
 ReactOBus
 =========
@@ -157,7 +156,7 @@ On each push, the tests and the coverage are computed on:
 
 setup(
     name="ReactOBus",
-    version="0.1",
+    version="0.2-git",
     description="A message broker to create software bus over the network",
     long_description=long_description,
     url="https://github.com/ivoire/ReactOBus",
