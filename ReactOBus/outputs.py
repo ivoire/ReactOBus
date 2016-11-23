@@ -20,6 +20,8 @@
 import logging
 from setproctitle import setproctitle
 import zmq
+from zmq.auth import load_certificate
+from zmq.auth.thread import ThreadAuthenticator
 
 from .utils import Pipe
 
@@ -73,6 +75,28 @@ class ZMQPub(ZMQ):
         super().__init__(name, options, outbound)
         self.socket_type = zmq.PUB
 
+    def secure_setup(self):
+        # Load certificates
+        # TODO: handle errors
+        self.auth = ThreadAuthenticator(self.context)
+        self.auth.start()
+        self.LOG.debug("Server keys in %s", self.secure_config["self"])
+        sock_pub, sock_priv = load_certificate(self.secure_config["self"])
+        if self.secure_config.get("clients", None) is not None:
+            self.LOG.debug("Client certificates in %s",
+                           self.secure_config["clients"])
+            self.auth.configure_curve(domain='*',
+                                      location=self.secure_config["clients"])
+        else:
+            self.LOG.debug("Every clients can connect")
+            self.auth.configure_curve(domain='*',
+                                      location=zmq.auth.CURVE_ALLOW_ANY)
+
+        # Setup the socket
+        self.sock.curve_publickey = sock_pub
+        self.sock.curve_secretkey = sock_priv
+        self.sock.curve_server = True
+
 
 class ZMQPush(ZMQ):
     classname = "ZMQPush"
@@ -80,3 +104,11 @@ class ZMQPush(ZMQ):
     def __init__(self, name, options, outbound):
         super().__init__(name, options, outbound)
         self.socket_type = zmq.PUSH
+
+    def secure_setup(self):
+        # TODO: handle errors
+        (sock_pub, sock_priv) = load_certificate(self.secure_setup["self"])
+        (server_public, _) = load_certificate(self.secure_setup["server"])
+        self.sock.curve_publickey = sock_pub
+        self.sock.curve_secretkey = sock_priv
+        self.sock.curve_serverkey = server_public
