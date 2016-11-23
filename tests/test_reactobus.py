@@ -155,10 +155,10 @@ def test_reactor(tmpdir):
         f.write("      args:\n")
         f.write("      - topic\n")
         f.write("      - $topic\n")
-        f.write("      - data\n")
-        f.write("      - $data\n")
         f.write("      - data.url\n")
         f.write("      - $data.url\n")
+        f.write("      - data\n")
+        f.write("      - $data\n")
         f.write("      - stdin:user\n")
         f.write("      - stdin:$username\n")
         f.write("      - stdin:url\n")
@@ -179,23 +179,24 @@ def test_reactor(tmpdir):
     # Allow the process sometime to setup and connect
     time.sleep(1)
 
-    data = json.dumps({"url": "https://code.videolan.org/éêï",
-                       "username": "git"})
+    data = {"url": "https://code.videolan.org/éêï",
+            "username": "git"}
     in_sock.send_multipart([b"org.videolan.git",
                             b(str(uuid.uuid1())),
                             b(datetime.datetime.utcnow().isoformat()),
                             b("vidéolan-git"),
-                            b(data)])
+                            b(json.dumps(data))])
 
     time.sleep(1)
     proc.terminate()
     proc.wait()
 
     with open(str(script_args), "r") as f:
-        line = f.readlines()
-        assert line == ["topic org.videolan.git data %s "
-                        "data.url "
-                        "https://code.videolan.org/éêï\n" % data]
+        line = f.readlines()[0]
+        (begin, data_recv) = line.split("{")
+        data_recv = json.loads("{" + data_recv)
+        assert data == data_recv
+        assert begin == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
     with open(str(script_stdin), "r") as f:
         lines = f.readlines()
         assert len(lines) == 4
