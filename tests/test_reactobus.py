@@ -33,6 +33,7 @@ from zmq.utils.strtypes import b
 
 from ReactOBus.db import Message
 
+
 def test_help():
     help_str = """usage: reactobus [-h] [-c CONFIG] [-l {DEBUG,ERROR,INFO,WARN}]
                  [--log-file LOG_FILE]
@@ -114,7 +115,8 @@ def test_simple_forward(tmpdir):
 
     session = sessions()
     assert session.query(Message).count() == 1000
-    assert session.query(Message).filter_by(topic="org.reactobus.test.py").count() == 1000
+    assert session.query(Message).filter_by(topic="org.reactobus.test.py")\
+                  .count() == 1000
 
 
 def test_reactor(tmpdir):
@@ -195,12 +197,12 @@ def test_reactor(tmpdir):
                         "data.url "
                         "https://code.videolan.org/éêï\n" % data]
     with open(str(script_stdin), "r") as f:
-        l = f.readlines()
-        assert len(l) == 4
-        assert l[0] == "user\n"
-        assert l[1] == "vidéolan-git\n"
-        assert l[2] == "url\n"
-        assert l[3] == "https://code.videolan.org/éêï"
+        lines = f.readlines()
+        assert len(lines) == 4
+        assert lines[0] == "user\n"
+        assert lines[1] == "vidéolan-git\n"
+        assert lines[2] == "url\n"
+        assert lines[3] == "https://code.videolan.org/éêï"
 
 
 def test_encryption(tmpdir):
