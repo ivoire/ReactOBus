@@ -19,8 +19,6 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 from setuptools import setup
-import subprocess
-import sys
 
 
 # This text is generated from README.md using pandoc
@@ -190,5 +188,4 @@ setup(
         # when used
         'db':  ["SQLAlchemy"]
     }
-
 )
