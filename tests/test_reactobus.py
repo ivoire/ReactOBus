@@ -154,6 +154,8 @@ def test_reactor(tmpdir):
         f.write("      - topic\n")
         f.write("      - $topic\n")
         f.write("      - data\n")
+        f.write("      - $data\n")
+        f.write("      - data.url\n")
         f.write("      - $data.url\n")
         f.write("      - stdin:user\n")
         f.write("      - stdin:$username\n")
@@ -175,20 +177,23 @@ def test_reactor(tmpdir):
     # Allow the process sometime to setup and connect
     time.sleep(1)
 
+    data = json.dumps({"url": "https://code.videolan.org/éêï",
+                       "username": "git"})
     in_sock.send_multipart([b"org.videolan.git",
                             b(str(uuid.uuid1())),
                             b(datetime.datetime.utcnow().isoformat()),
                             b("vidéolan-git"),
-                            b(json.dumps({"url": "https://code.videolan.org/éêï",
-                                          "username": "git"}))])
+                            b(data)])
 
     time.sleep(1)
     proc.terminate()
     proc.wait()
 
     with open(str(script_args), "r") as f:
-        l = f.readlines()
-        assert l == ["topic org.videolan.git data https://code.videolan.org/éêï\n"]
+        line = f.readlines()
+        assert line == ["topic org.videolan.git data %s "
+                        "data.url "
+                        "https://code.videolan.org/éêï\n" % data]
     with open(str(script_stdin), "r") as f:
         l = f.readlines()
         assert len(l) == 4
