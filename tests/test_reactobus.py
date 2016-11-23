@@ -102,7 +102,7 @@ def test_simple_forward(tmpdir):
         in_sock.send_multipart(data)
         assert out_sock.recv_multipart() == data
 
-    time.sleep(2)
+    time.sleep(3)
 
     proc.terminate()
     proc.wait()
