@@ -48,7 +48,7 @@ Logging:
                         Log level (DEBUG, ERROR, INFO, WARN), default to INFO
   --log-file LOG_FILE   Log file, use '-' for stdout
 """
-    assert subprocess.check_output(["python", "reactobus", "--help"],
+    assert subprocess.check_output(["python3", "reactobus", "--help"],
                                    universal_newlines=True) == help_str
 
 
@@ -77,7 +77,7 @@ def test_simple_forward(tmpdir):
         f.write("  name: testing-out\n")
         f.write("  options:\n")
         f.write("    url: ipc://%s\n" % push_url)
-    args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
             "--log-file", "-"]
     proc = subprocess.Popen(args,
                             stdout=open(str(stdout), "w"),
@@ -166,7 +166,7 @@ def test_reactor(tmpdir):
         f.write("core:\n")
         f.write("  inbound: ipc://%s\n" % inbound)
         f.write("  outbound: ipc://%s\n" % outbound)
-    args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
             "--log-file", "-"]
     proc = subprocess.Popen(args,
                             stdout=open(str(stdout), "w"),
@@ -250,7 +250,7 @@ def test_encryption(tmpdir):
         f.write("  name: out-push\n")
         f.write("  options:\n")
         f.write("    url: ipc://%s\n" % push_url)
-    args = ["python", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
             "--log-file", "-"]
     proc = subprocess.Popen(args,
                             stdout=open(str(stdout), "w"),
