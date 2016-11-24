@@ -1,22 +1,25 @@
-.. ReactOBus documentation master file, created by
-   sphinx-quickstart on Thu Nov 24 11:23:47 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+ReactOBus
+#########
 
-Welcome to ReactOBus's documentation!
-=====================================
+ReactOBus is a message broker that helps to create software bus over the network
+and to react to some messages.
 
-Contents:
+
+Features
+========
+
+ReactOBus is able to:
+
+* collet events (as network messages) from different sources
+* publish the stream of events
+* store the events in a database
+* launch specific commands when an event match some conditions
+
+Refer to the next sections for a more detailed documentation:
 
 .. toctree::
    :maxdepth: 2
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   install
+   configuration
 
