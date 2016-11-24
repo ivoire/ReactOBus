@@ -10,7 +10,7 @@ Features
 
 ReactOBus is able to:
 
-* collet events (as network messages) from different sources
+* collect events (as network messages) from different sources
 * publish the stream of events
 * store the events in a database
 * launch specific commands when an event match some conditions
@@ -22,4 +22,4 @@ Refer to the next sections for a more detailed documentation:
 
    install
    configuration
-
+   development

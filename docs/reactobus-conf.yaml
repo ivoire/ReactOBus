@@ -34,10 +34,11 @@ reactor:
       - stdin:topic
       - stdin:$topic
 
+# database
 db:
   url: sqlite:///db.sqlite3
-  table: messages   # TODO: unused yet
 
+# outputs
 outputs:
 - class: ZMQPub
   name: PublicPub
@@ -47,3 +48,6 @@ outputs:
   name: PrivatePush
   options:
     url: tcp://127.0.0.1:5557
+    encryption:
+      self: /etc/reactobus/certs/PrivatePush.key_secret
+      server: /etc/reactobus/certs/PrivatePush-server.key
