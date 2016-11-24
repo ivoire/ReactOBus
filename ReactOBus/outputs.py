@@ -61,7 +61,6 @@ class ZMQ(Output):
 
     def run(self):
         self.setup()
-        # TODO: this is a dummy class.
         while True:
             msg = self.sub.recv_multipart()
             self.LOG.debug(msg)

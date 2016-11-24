@@ -85,9 +85,8 @@ class DB(multiprocessing.Process):
                 return
             except SQLAlchemyError as err:
                 err_msg = str(err)
-        # Impossible to commit the message
-        LOG.error("Unable to commit to the database, "
-                  "dropping the message")
+        # Impossible to commit the messages
+        LOG.error("Unable to commit to the database, retrying later on")
         LOG.error("Database error: %s", err_msg)
 
     def run(self):
@@ -97,8 +96,8 @@ class DB(multiprocessing.Process):
         last_save = time.time()
         self.messages = []
         while True:
-            # Wait for 1000 if self.messages is not empty, overwise, wait for a
-            # new message infinitely
+            # Wait for 1000ms if self.messages is not empty, overwise, wait for
+            # a new message forever
             timeout = 1000 if self.messages else -1
             sockets = dict(self.poller.poll(timeout))
             if sockets.get(self.sub) == zmq.POLLIN:
