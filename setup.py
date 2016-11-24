@@ -143,6 +143,7 @@ On each push, the tests and the coverage are computed on:
 
 -  `Test results <https://travis-ci.org/ivoire/ReactOBus>`__
 -  `Coverage report <https://coveralls.io/github/ivoire/ReactOBus>`__
+-  `Static analysis <https://landscape.io/github/ivoire/ReactOBus>`__
 
 .. |Build Status| image:: https://travis-ci.org/ivoire/ReactOBus.svg?branch=master
    :target: https://travis-ci.org/ivoire/ReactOBus

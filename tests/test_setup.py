@@ -25,7 +25,7 @@ from zmq.utils.strtypes import u
 
 def is_pandoc_available():
     try:
-        _ = subprocess.check_output(["pandoc", "--help"], timeout=1)
+        _ = subprocess.check_output(["pandoc", "--help"], timeout=3)
         return True
     except (OSError, subprocess.SubprocessError):
         return False
