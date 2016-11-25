@@ -155,7 +155,7 @@ On each push, the tests and the coverage are computed on:
 
 setup(
     name="ReactOBus",
-    version="0.2-git",
+    version="0.2",
     description="A message broker to create software bus over the network",
     long_description=long_description,
     url="https://github.com/ivoire/ReactOBus",
