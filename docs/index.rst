@@ -1,3 +1,5 @@
+.. _index:
+
 ReactOBus
 #########
 
@@ -15,11 +17,14 @@ ReactOBus is able to:
 * store the events in a database
 * launch specific commands when an event match some conditions
 
-Refer to the next sections for a more detailed documentation:
+
+Table of Contents
+=================
 
 .. toctree::
    :maxdepth: 2
 
    install
    configuration
+   usage
    development

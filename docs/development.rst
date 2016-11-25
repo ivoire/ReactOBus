@@ -15,13 +15,19 @@ Testing
 
 In order to test ReactOBus, you should install `py.test <http://docs.pytest.org/en/latest/>`_:
 
+.. code-block:: shell
+
     pip install pytest
 
 Then run the test with:
 
+.. code-block:: shell
+
     py.test -v tests
 
 The code should be also *pep8* clean:
+
+.. code-block:: shell
 
     pep8 ReactoBus
     pep8 reactobus

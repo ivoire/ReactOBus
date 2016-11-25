@@ -1,4 +1,4 @@
-.. index:: installation
+.. _installation:
 
 Installation
 ############
@@ -7,12 +7,16 @@ Releases
 ========
 
 ReactOBus official releases are avaiable directly on `pypi
-<https://pypi.python.org/pypi/ReactOBus/>`_ and can be installed with::
+<https://pypi.python.org/pypi/ReactOBus/>`_ and can be installed with:
+
+.. code-block:: shell
 
     pip install ReactOBus
 
 By default, **pip** will not install SQLAlchemy. If need, install it manually
-afterward or ask pip to include the right ReactOBus variant with::
+afterward or ask pip to include the right ReactOBus variant with:
+
+.. code-block:: shell
 
     pip install ReactOBus[db]
 
@@ -20,7 +24,9 @@ afterward or ask pip to include the right ReactOBus variant with::
 Development versions
 =====================
 
-It's also possible to execute ReactOBus directly from the sources::
+It's also possible to execute ReactOBus directly from the sources:
+
+.. code-block:: shell
 
     git clone https://github.com/ivoire/ReactOBus.git
     cd ReactOBus

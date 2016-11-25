@@ -1,4 +1,4 @@
-.. index:: configuration
+.. _configuration:
 
 Configuration
 #############
@@ -44,7 +44,9 @@ dictionary should include:
 
 * *url*: the url where to bind the socket
 
-If the PUSH sockets are sending encrypted content, you should add the folowing configuration::
+If the PUSH sockets are sending encrypted content, you should add the folowing configuration:
+
+.. code-block:: yaml
 
   options:
     url: tcp://*:5554
@@ -65,7 +67,9 @@ This class allows to subscribe to a ZMQ PUB socket. The *options* are:
 
 * *url*: the url of the PUB socket
 
-For an encrypted socket, you should add::
+For an encrypted socket, you should add:
+
+.. code-block:: yaml
 
     options:
       url: tcp://127.0.0.1:5555
@@ -195,7 +199,9 @@ dictionary should include:
 
 * *url*: the url of the PULL socket
 
-In order to encrypt the messages, you should add the folowing configuration::
+In order to encrypt the messages, you should add the folowing configuration:
+
+.. code-block:: yaml
 
   options:
     url: tcp://*:5554
@@ -216,7 +222,9 @@ This class allows to publish messages to ZMQ PUB sockets. The *options* are:
 
 * *url*: the url of the PUB socket
 
-For an encrypted socket, you should add::
+For an encrypted socket, you should add:
+
+.. code-block:: yaml
 
     options:
       url: tcp://127.0.0.1:5555
@@ -228,4 +236,3 @@ The encryption keys are both mandatory:
 
 * *self*: the private certificate of this socket
 * *clients*: the path to a directory containing the public certificates of the SUB sockets
-
