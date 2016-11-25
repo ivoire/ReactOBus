@@ -44,7 +44,7 @@ dictionary should include:
 
 * *url*: the url where to bind the socket
 
-If the PUSH sockets are sending encrypted content, you should add the folowing configuration:
+If the PUSH sockets are sending encrypted content, you should add the following configuration:
 
 .. code-block:: yaml
 
@@ -143,7 +143,7 @@ The available fields are:
 * username
 * data
 
-The available arguments are build using the folowing algorith:
+The available arguments are build using the following algorithm:
 
 * "topic": won't be changed
 * "$topic": will be replaced by the content of the corresponding field
@@ -199,7 +199,7 @@ dictionary should include:
 
 * *url*: the url of the PULL socket
 
-In order to encrypt the messages, you should add the folowing configuration:
+In order to encrypt the messages, you should add the following configuration:
 
 .. code-block:: yaml
 

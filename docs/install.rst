@@ -6,7 +6,7 @@ Installation
 Releases
 ========
 
-ReactOBus official releases are avaiable directly on `pypi
+ReactOBus official releases are available directly on `pypi
 <https://pypi.python.org/pypi/ReactOBus/>`_ and can be installed with:
 
 .. code-block:: shell
