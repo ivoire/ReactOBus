@@ -17,11 +17,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
+from argparse import Namespace
 import logging
 from setproctitle import setproctitle
+import time
 import zmq
 from zmq.auth import load_certificate
 from zmq.auth.thread import ThreadAuthenticator
+from zmq.utils.strtypes import b
 
 from .utils import Pipe
 
@@ -38,6 +41,12 @@ class ZMQ(Output):
         self.procname = name
         self.outbound = outbound
 
+        self.heartbeat = None
+        if 'heartbeat' in options:
+            self.heartbeat = Namespace
+            self.heartbeat.timeout = options['heartbeat']['timeout']
+            self.heartbeat.topic = options['heartbeat']['topic']
+
     def secure_setup(self):
         raise NotImplementedError
 
@@ -48,7 +57,7 @@ class ZMQ(Output):
 
         self.sock = self.context.socket(self.socket_type)
         if self.socket_type == zmq.PUB:
-            self.LOG.debug("Listening on %s", self.url)
+            self.LOG.debug("Publishing on %s", self.url)
             self.sock.bind(self.url)
         else:
             self.LOG.debug("Connecting to %s", self.url)
@@ -61,10 +70,33 @@ class ZMQ(Output):
 
     def run(self):
         self.setup()
-        while True:
-            msg = self.sub.recv_multipart()
-            self.LOG.debug(msg)
-            self.sock.send_multipart(msg)
+
+        # Do we use heartbeating or not?
+        if self.heartbeat is None:
+            while True:
+                msg = self.sub.recv_multipart()
+                self.LOG.debug(msg)
+                self.sock.send_multipart(msg)
+        else:
+            poller = zmq.Poller()
+            poller.register(self.sub, zmq.POLLIN)
+
+            last_heart_beat = time.time()
+            while True:
+                sockets = dict(poller.poll(self.heartbeat.timeout * 1000))
+                if sockets.get(self.sub) == zmq.POLLIN:
+                    msg = self.sub.recv_multipart()
+                    self.LOG.debug(msg)
+                    self.sock.send_multipart(msg)
+
+                # Do we have to send a message
+                now = time.time()
+                interval = now - last_heart_beat
+                if interval > self.heartbeat.timeout:
+                    self.LOG.debug("Sending heartbeat")
+                    last_heart_beat = now
+                    self.sock.send_multipart([b(self.heartbeat.topic),
+                                              b("%0.4f" % interval)])
 
 
 class ZMQPub(ZMQ):
