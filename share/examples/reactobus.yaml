@@ -43,6 +43,9 @@ outputs:
   name: PublicPub
   options:
     url: tcp://*:5556
+    heartbeat:
+      timeout: 5
+      topic: org.reactobus.heartbeat
 - class: ZMQPush
   name: PrivatePush
   options:

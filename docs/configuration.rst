@@ -218,9 +218,29 @@ The encryption keys are both mandatory:
 ZMQPub
 ******
 
-This class allows to publish messages to ZMQ PUB sockets. The *options* are:
+This class allows to publish messages to ZMQ SUB sockets. The *options* are:
 
 * *url*: the url of the PUB socket
+
+It's also possible to send heartbeats regularly. This allows listeners to
+detect that the network connection break and to reconnect to the publisher.
+In order to use heartbeats, add *heartbeat* to the options:
+
+.. code-block:: yaml
+
+    options:
+      url: tcp://127.0.0.1:5555
+      heartbeat:
+        timeout: 2 # in seconds
+        topic: org.reactobus.pub.heartbeat
+
+The options are:
+
+* *timeout*: the heartbeat interval
+* *topic*: the topic for the heartbeat messages
+
+.. note:: The hearbeat message is a multipart message consisting of the topic
+  and the duration since the last heartbeat.
 
 For an encrypted socket, you should add:
 
