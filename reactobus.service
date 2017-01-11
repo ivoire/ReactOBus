@@ -1,0 +1,11 @@
+[Unit]
+Description=Reactobus daemon
+
+[Service]
+EnvironmentFile=/etc/reactobus.cfg
+ExecStart=python3 ${REACTOBUS_DIR}/reactobus --config ${REACTOBUS_CONFIG} --level ${REACTOBUS_LOGLEVEL}
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
