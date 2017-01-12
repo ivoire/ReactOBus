@@ -123,8 +123,16 @@ def main():
 
     options = parser.parse_args()
 
-    # Configure everything
+    # Configure logging
     configure_logger(options.log_file, options.level)
+
+    # Check that we are running under supported Python versions
+    if sys.version < "3.4":
+        LOG.error("Using an un-supported Python versions")
+        LOG.error("Use at least Python v3.4")
+        sys.exit(1)
+
+    # Configure the pipeline
     stages = configure_pipeline(options.config)
 
     # Setup and start the pipeline
