@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
+import json
 import multiprocessing
 
 
@@ -45,3 +46,27 @@ class Pipe(multiprocessing.Process):
 
     def run(self):
         raise NotImplementedError
+
+
+# Dump anything depending on the type
+# String will be returned untouched while verything else will be dumped as
+# json.
+def dump(value):
+    if isinstance(value, str):
+        return value
+    else:
+        return json.dumps(value)
+
+
+# Lookup "name" in variables and fallback to data if the name is of the form
+# "data.key"
+def lookup(name, variables, data):
+    if name in variables:
+        return variables[name]
+    elif name == "data":
+        return dump(data)
+    elif name.startswith("data."):
+        sub_name = name[5:]
+        if sub_name in data:
+            return dump(data[sub_name])
+    raise KeyError(name)

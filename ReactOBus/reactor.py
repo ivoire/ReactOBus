@@ -27,6 +27,8 @@ import threading
 import zmq
 from zmq.utils.strtypes import b, u
 
+from .utils import lookup
+
 LOG = logging.getLogger("ROB.reactor")
 
 
@@ -39,31 +41,10 @@ class Matcher(object):
         self.timeout = rule["exec"]["timeout"]
         self.args = rule["exec"]["args"]
 
-    @classmethod
-    def dump(cls, value):
-        if isinstance(value, str):
-            return value
-        else:
-            return json.dumps(value)
-
-    @classmethod
-    def lookup(cls, name, variables, data):
-        # Lookup in variables and fallback to data if the name is of the form
-        # "data.key"
-        if name in variables:
-            return variables[name]
-        elif name == "data":
-            return cls.dump(data)
-        elif name.startswith("data."):
-            sub_name = name[5:]
-            if sub_name in data:
-                return cls.dump(data[sub_name])
-        raise KeyError(name)
-
     def match(self, variables, data):
         # Returne True if the field does match, overwise return False
         try:
-            value = self.lookup(self.field, variables, data)
+            value = lookup(self.field, variables, data)
             return self.pattern.match(value) is not None
         except KeyError:
             return False
@@ -79,10 +60,10 @@ class Matcher(object):
         # Make the substitution
         for field in self.args:
             if field.startswith("$"):
-                args.append(self.lookup(field[1:], variables, data))
+                args.append(lookup(field[1:], variables, data))
             elif field.startswith("stdin:"):
                 if field[6:].startswith("$"):
-                    stdin.append(self.lookup(field[7:], variables, data))
+                    stdin.append(lookup(field[7:], variables, data))
                 else:
                     stdin.append(field[6:])
             else:

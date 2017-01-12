@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
+import json
 import logging
 from setproctitle import setproctitle
 import zmq
@@ -25,6 +26,7 @@ from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import u
 
 from .utils import Pipe
+from .filters import Filter
 
 
 class Input(Pipe):
@@ -35,6 +37,8 @@ class ZMQ(Input):
     def __init__(self, name, options, inbound):
         super().__init__()
         self.url = options["url"]
+        self.pipeline_config = options.get("filters", None)
+        self.pipeline = []
         self.secure_config = options.get("encryption", None)
         self.LOG = logging.getLogger("ROB.input.%s" % name)
         self.procname = name
@@ -67,19 +71,32 @@ class ZMQ(Input):
         self.push = self.context.socket(zmq.PUSH)
         self.push.connect(self.inbound)
 
+        if self.pipeline_config is not None:
+            self.LOG.debug("Adding the filters")
+            for pipe in self.pipeline_config:
+                self.pipeline.append(Filter(pipe["field"], pipe["pattern"]))
+
     def run(self):
         self.setup()
 
         while True:
             msg = self.sock.recv_multipart()
-            # TODO: use a pipeline to transform the messages
             try:
-                (topic, uuid, dt, username, data) = msg[:]
+                (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
+                self.LOG.debug("topic: %s, data: %s", topic, data)
+                if self.pipeline:
+                    variables = {"topic": topic,
+                                 "uuid": uuid,
+                                 "datetime": dt,
+                                 "username": username}
+                    data_parsed = json.loads(u(data))
+                    if not all([p.match(variables, data_parsed) for p in self.pipeline]):
+                        self.LOG.debug("Filtering-out the message")
+                        continue
             except ValueError:
                 self.LOG.error("Droping invalid message")
                 self.LOG.debug("=> %s", msg)
                 continue
-            self.LOG.debug("topic: %s, data: %s", u(topic), u(data))
             self.push.send_multipart(msg)
 
 

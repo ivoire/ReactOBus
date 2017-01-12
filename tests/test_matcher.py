@@ -99,40 +99,6 @@ def test_data_matching():
     assert m.match({}, {"submitter": "kernel"}) is False
 
 
-def test_lookup():
-    assert Matcher.lookup("username", {"username": "kernel"}, {}) == "kernel"
-    assert Matcher.lookup("msg",
-                          {"username": "kernel",
-                           "msg": "hello"}, {}) == "hello"
-
-    # $data
-    assert Matcher.lookup("data", {"msg": "something"}, {}) == "{}"
-    assert Matcher.lookup("data", {"msg": "something"}, "just a string") == "just a string"
-    assert Matcher.lookup("data", {"msg": "something"},
-                          {"hello": "world"}) == '{"hello": "world"}'
-    assert Matcher.lookup("data", {"msg": "something"},
-                          ["hello", "world"]) == '["hello", "world"]'
-
-    # $data.key
-    assert Matcher.lookup("data.key", {"msg": "something"},
-                          {"key": "value"}) == "value"
-    assert Matcher.lookup("data.hello", {"msg": "something"},
-                          {"hello": "world"}) == "world"
-    assert Matcher.lookup("data.hello", {"msg": "something"},
-                          {"hello": []}) == "[]"
-    assert Matcher.lookup("data.hello", {"msg": "something"},
-                          {"hello": [{"world": 1}, {"wordl": 2}]}) == '[{"world": 1}, {"wordl": 2}]'
-
-    with pytest.raises(KeyError):
-        Matcher.lookup("msg", {}, {})
-    with pytest.raises(KeyError):
-        Matcher.lookup("msg", {}, {"msg": "value"})
-    with pytest.raises(KeyError):
-        Matcher.lookup("msg", {"username": "kernel"}, {})
-    with pytest.raises(KeyError):
-        Matcher.lookup("data.username", {"username": "kernel"}, {})
-
-
 def test_build_args():
     m = Matcher(rule_1)
 

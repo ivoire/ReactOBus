@@ -85,6 +85,77 @@ def test_zmq_pull(monkeypatch, tmpdir):
                           b"testing", b"{}"]]
 
 
+def test_zmq_pull_filtering(monkeypatch, tmpdir):
+    # Reload the base class "Pipe"
+    import ReactOBus.utils
+    imp.reload(ReactOBus.utils)
+    import ReactOBus.inputs
+    imp.reload(ReactOBus.inputs)
+    from ReactOBus.inputs import ZMQPull
+
+    # Replace zmq.Context.instance()
+    imp.reload(zmq)
+
+    zmq_instance = mock.ZMQContextInstance()
+    monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
+
+    url = "ipc://%s" % tmpdir.join("ReactOBus.test.push")
+    inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")
+
+    # Create the sockets and the data
+    pull = zmq_instance.socket(zmq.PULL)
+    push = zmq_instance.socket(zmq.PUSH)
+
+    # send valid message that will be filtered out
+    data = [
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"rob", b"{}"],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"],
+            ]
+    pull.recv.extend(data)
+
+    p = ZMQPull("pull", {"url": url,
+                         "filters": [{"field": "username", "pattern": "rob"}]},
+                inbound)
+    with pytest.raises(IndexError):
+        p.run()
+
+    assert pull.bound and not pull.connected
+    assert pull.url == url
+    assert pull.recv == []
+
+    assert push.url == inbound
+    assert push.connected and not push.bound
+    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
+                          b"rob", b"{}"]]
+
+    # send valid message that will be filtered out
+    data = [
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"rob", b'{"hello": "world"}'],
+            [b"org.reactobus.test", b"uuid", b"2016-11-15",
+             b"testing", b"{}"],
+            ]
+    push.send = []
+    pull.recv.extend(data)
+
+    p = ZMQPull("pull", {"url": url,
+                         "filters": [{"field": "data.hello", "pattern": "world"}]},
+                inbound)
+    with pytest.raises(IndexError):
+        p.run()
+
+    assert pull.bound and not pull.connected
+    assert pull.url == url
+    assert pull.recv == []
+
+    assert push.url == inbound
+    assert push.connected and not push.bound
+    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
+                          b"rob", b'{"hello": "world"}']]
+
+
 def test_zmq_sub(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils

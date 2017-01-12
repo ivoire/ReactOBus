@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: set ts=4
 
-# Copyright 2016 Rémi Duraffort
+# Copyright 2016-2017 Rémi Duraffort
 # This file is part of ReactOBus.
 #
 # ReactOBus is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
-from ReactOBus.utils import Pipe
-
+from ReactOBus.utils import lookup, Pipe
+from ReactOBus.reactor import Matcher
 import pytest
 
 
@@ -48,3 +48,37 @@ def test_pipe():
         p.setup()
     with pytest.raises(NotImplementedError):
         p.run()
+
+
+def test_lookup():
+    assert lookup("username", {"username": "kernel"}, {}) == "kernel"
+    assert lookup("msg",
+                  {"username": "kernel",
+                   "msg": "hello"}, {}) == "hello"
+
+    # $data
+    assert lookup("data", {"msg": "something"}, {}) == "{}"
+    assert lookup("data", {"msg": "something"}, "just a string") == "just a string"
+    assert lookup("data", {"msg": "something"},
+                  {"hello": "world"}) == '{"hello": "world"}'
+    assert lookup("data", {"msg": "something"},
+                  ["hello", "world"]) == '["hello", "world"]'
+
+    # $data.key
+    assert lookup("data.key", {"msg": "something"},
+                  {"key": "value"}) == "value"
+    assert lookup("data.hello", {"msg": "something"},
+                  {"hello": "world"}) == "world"
+    assert lookup("data.hello", {"msg": "something"},
+                  {"hello": []}) == "[]"
+    assert lookup("data.hello", {"msg": "something"},
+                          {"hello": [{"world": 1}, {"wordl": 2}]}) == '[{"world": 1}, {"wordl": 2}]'
+
+    with pytest.raises(KeyError):
+        lookup("msg", {}, {})
+    with pytest.raises(KeyError):
+        lookup("msg", {}, {"msg": "value"})
+    with pytest.raises(KeyError):
+        lookup("msg", {"username": "kernel"}, {})
+    with pytest.raises(KeyError):
+        lookup("data.username", {"username": "kernel"}, {})

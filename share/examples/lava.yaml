@@ -3,10 +3,14 @@ inputs:
   name: staging
   options:
     url: tcp://staging.validation.linaro.org:5500
+
 - class: ZMQSub
   name: validation
   options:
     url: tcp://validation.linaro.org:5510
+    filters:
+    - field: data.status
+      pattern: Reserved
 
 db:
   url: sqlite:///lava.sqlite3

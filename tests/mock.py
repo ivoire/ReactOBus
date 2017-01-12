@@ -60,7 +60,8 @@ class ZMQSock(object):
         self.bound = True
 
     def recv_multipart(self):
-        return self.recv.pop(0)
+        data = self.recv.pop(0)
+        return data
 
     def send_multipart(self, msg):
         self.send.append(msg)

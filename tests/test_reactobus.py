@@ -142,6 +142,11 @@ def test_reactor(tmpdir):
         f.write("  name: testing-input\n")
         f.write("  options:\n")
         f.write("    url: ipc://%s\n" % pull_url)
+        f.write("    filters:\n")
+        f.write("    - field: username\n")
+        f.write("      pattern: vidéolan-git\n")
+        f.write("    - field: data.username\n")
+        f.write("      pattern: git\n")
         f.write("reactor:\n")
         f.write("  workers: 2\n")
         f.write("  rules:\n")
@@ -185,6 +190,11 @@ def test_reactor(tmpdir):
                             b(str(uuid.uuid1())),
                             b(datetime.datetime.utcnow().isoformat()),
                             b("vidéolan-git"),
+                            b(json.dumps(data))])
+    in_sock.send_multipart([b"org.videolan.git",
+                            b(str(uuid.uuid1())),
+                            b(datetime.datetime.utcnow().isoformat()),
+                            b("git"),
                             b(json.dumps(data))])
 
     time.sleep(1)
