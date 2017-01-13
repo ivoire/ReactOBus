@@ -18,6 +18,9 @@ The configuration file is a YAML dictionary containing:
   For instance, if the *outputs* key is not found in the configuration, the
   messages won't be forwarded outside of ReactOBus.
 
+
+.. _inputs:
+
 Inputs
 ======
 
@@ -102,6 +105,8 @@ It's import to configure these sockets correctly because two instances of
 ReactOBus should not use the same sockets.
 
 
+.. _reactor:
+
 Reactor
 =======
 
@@ -174,6 +179,8 @@ The only option is the *url* to the database. This url should be a valid
 <http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls>`_.
 
 
+.. _outputs:
+
 Outputs
 =======
 
@@ -239,7 +246,7 @@ The options are:
 * *timeout*: the heartbeat interval
 * *topic*: the topic for the heartbeat messages
 
-.. note:: The hearbeat message is a multipart message consisting of the topic
+.. note:: The heartbeat message is a multipart message consisting of the topic
   and the duration since the last heartbeat.
 
 For an encrypted socket, you should add:
@@ -256,3 +263,40 @@ The encryption keys are both mandatory:
 
 * *self*: the private certificate of this socket
 * *clients*: the path to a directory containing the public certificates of the SUB sockets
+
+
+Additional features
+====================
+
+Filtering
+*********
+
+ReactOBus can filter events at the :ref:`inputs` and :ref:`outputs` stages.
+
+In the corresponding input or output **options** block, you should add:
+
+.. code-block:: yaml
+
+    options:
+      filters:
+      - field: username
+        pattern: "reactobus-ci"
+
+**filters** is a list of filters. An event is passing the filters if and only
+if every filter in the list match the event.
+
+For instance, with the following configuration:
+
+.. code-block:: yaml
+
+    options:
+      filters:
+      - field: topic
+        pattern: org.reactobus.ci
+      - field: username
+        pattern: git-ci
+
+An event will match if and only if its topic is *org.reactobus.ci* and its
+username is *git-ci*.
+
+The filtering uses the same algorithm as the :ref:`reactor`.
