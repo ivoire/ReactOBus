@@ -25,8 +25,8 @@ from zmq.auth import load_certificate
 from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import u
 
-from .utils import Pipe
 from .filters import Filter
+from .utils import Pipe
 
 
 class Input(Pipe):
@@ -89,7 +89,7 @@ class ZMQ(Input):
                                  "uuid": uuid,
                                  "datetime": dt,
                                  "username": username}
-                    data_parsed = json.loads(u(data))
+                    data_parsed = json.loads(data)
                     if not all([p.match(variables, data_parsed) for p in self.pipeline]):
                         self.LOG.debug("Filtering-out the message")
                         continue
