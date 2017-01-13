@@ -78,7 +78,8 @@ class ZMQ(Output):
                 self.pipeline.append(Filter(pipe["field"], pipe["pattern"]))
 
     def filter(self, msg):
-        if self.pipeline is []:
+        print("self.pipeline=%s" % self.pipeline)
+        if not self.pipeline:
             return False
         (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
         variables = {"topic": topic,
@@ -114,6 +115,7 @@ class ZMQ(Output):
                     self.sock.send_multipart(msg)
 
                 # Do we have to send a message
+                # We send heartbeats evenif events where send.
                 now = time.time()
                 interval = now - last_heart_beat
                 if interval > self.heartbeat.timeout:
