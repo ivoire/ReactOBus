@@ -18,14 +18,16 @@
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
 from argparse import Namespace
+import json
 import logging
 from setproctitle import setproctitle
 import time
 import zmq
 from zmq.auth import load_certificate
 from zmq.auth.thread import ThreadAuthenticator
-from zmq.utils.strtypes import b
+from zmq.utils.strtypes import b, u
 
+from .filters import Filter
 from .utils import Pipe
 
 
@@ -37,6 +39,8 @@ class ZMQ(Output):
     def __init__(self, name, options, outbound):
         super().__init__()
         self.url = options["url"]
+        self.pipeline_config = options.get("filters", None)
+        self.pipeline = []
         self.LOG = logging.getLogger("ROB.output.%s" % name)
         self.procname = name
         self.outbound = outbound
@@ -68,6 +72,22 @@ class ZMQ(Output):
         self.sub.setsockopt(zmq.SUBSCRIBE, b"")
         self.sub.connect(self.outbound)
 
+        if self.pipeline_config is not None:
+            self.LOG.debug("Adding the filters")
+            for pipe in self.pipeline_config:
+                self.pipeline.append(Filter(pipe["field"], pipe["pattern"]))
+
+    def filter(self, msg):
+        if self.pipeline is []:
+            return False
+        (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
+        variables = {"topic": topic,
+                     "uuid": uuid,
+                     "datetime": dt,
+                     "username": username}
+        data_parsed = json.loads(data)
+        return not all([p.match(variables, data_parsed) for p in self.pipeline])
+
     def run(self):
         self.setup()
 
@@ -75,6 +95,8 @@ class ZMQ(Output):
         if self.heartbeat is None:
             while True:
                 msg = self.sub.recv_multipart()
+                if self.filter(msg):
+                    continue
                 self.LOG.debug(msg)
                 self.sock.send_multipart(msg)
         else:
@@ -86,6 +108,8 @@ class ZMQ(Output):
                 sockets = dict(poller.poll(self.heartbeat.timeout * 1000))
                 if sockets.get(self.sub) == zmq.POLLIN:
                     msg = self.sub.recv_multipart()
+                    if self.filter(msg):
+                        continue
                     self.LOG.debug(msg)
                     self.sock.send_multipart(msg)
 

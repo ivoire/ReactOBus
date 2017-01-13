@@ -8,9 +8,6 @@ inputs:
   name: validation
   options:
     url: tcp://validation.linaro.org:5510
-    filters:
-    - field: data.status
-      pattern: Reserved
 
 db:
   url: sqlite:///lava.sqlite3
@@ -18,3 +15,15 @@ db:
 core:
   inbound: ipc:///tmp/ReactOBus.lava.inbound
   outbound: ipc:///tmp/ReactOBus.lava.outbound
+
+outputs:
+- class: ZMQPub
+  name: PublicPub
+  options:
+    url: tcp://*:5556
+    heartbeat:
+      timeout: 5
+      topic: org.reactobus.heartbeat
+    filters:
+    - field: data.status
+      pattern: Reserved
