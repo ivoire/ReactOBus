@@ -135,7 +135,7 @@ A rule description is made of:
 * *math*: the matching rule as a dictionary:
 
   * *field*: the field to match
-  * *pattern*: the regular expression that should match the field content
+  * *patterns*: the list of regular expressions. An event is matching if one of these patterns is matching the field content
 
 * *exec*: the sub-command as a dictionary:
 
@@ -150,6 +150,9 @@ The available fields are:
 * datetime
 * username
 * data
+
+.. note:: When using *data.something*, the pattern will be match against the
+  content of *data["something"]*.
 
 The available arguments are build using the following algorithm:
 

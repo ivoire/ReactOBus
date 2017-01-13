@@ -117,19 +117,19 @@ def test_worker_and_matchers(monkeypatch):
 
     rule_1 = {"name": "first test",
               "match": {"field": "topic",
-                        "pattern": "^org.reactobus.lava"},
+                        "patterns": "^org.reactobus.lava"},
               "exec": {"path": "/bin/true",
                        "args": ["topic", "$topic", "username", "$username"],
                        "timeout": 1}}
     rule_2 = {"name": "second test",
               "match": {"field": "username",
-                        "pattern": ".*kernel.*"},
+                        "patterns": ".*kernel.*"},
               "exec": {"path": "/bin/true",
                        "args": ["topic", "$topic", "username", "$username"],
                        "timeout": 1}}
     rule_3 = {"name": "data matching",
               "match": {"field": "data.submitter",
-                        "pattern": "kernel-ci"},
+                        "patterns": "kernel-ci"},
               "exec": {"path": "/bin/true",
                        "args": ["topic", "$topic", "submitter",
                                 "$data.submitter"],

@@ -36,7 +36,13 @@ class Matcher(object):
     def __init__(self, rule):
         self.name = rule["name"]
         self.field = rule["match"]["field"]
-        self.pattern = re.compile(rule["match"]["pattern"])
+        self.patterns = []
+        patterns = rule["match"]["patterns"]
+        if isinstance(patterns, list):
+            for pattern in patterns:
+                self.patterns.append(re.compile(pattern))
+        else:
+            self.patterns = [re.compile(patterns)]
         self.binary = rule["exec"]["path"]
         self.timeout = rule["exec"]["timeout"]
         self.args = rule["exec"]["args"]
@@ -45,7 +51,7 @@ class Matcher(object):
         # Returne True if the field does match, overwise return False
         try:
             value = lookup(self.field, variables, data)
-            return self.pattern.match(value) is not None
+            return any([p.match(value) is not None for p in self.patterns])
         except KeyError:
             return False
 

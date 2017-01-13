@@ -62,7 +62,7 @@ def test_reactor(monkeypatch):
     options = {
         "rules": [{"name": "first test",
                    "match": {"field": "topic",
-                             "pattern": "^org.reactobus.lava"},
+                             "patterns": "^org.reactobus.lava"},
                    "exec": {"path": "/bin/true",
                             "args": ["topic", "$topic", "username",
                                      "$username"],
@@ -89,4 +89,39 @@ def test_reactor(monkeypatch):
     assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
                             b"2016", b"lavauser", b"{}"],
                            [b"0", b"org.reactobus.lava", b"uuid2",
+                            b"2016", b"lavauser", b"{}"]]
+
+    dealer.send = []
+    r = Reactor(options, "inproc://test")
+    options = {
+        "rules": [{"name": "first test",
+                   "match": {"field": "topic",
+                             "patterns": ["^org.reactobus.lava", "^org.linaro.validation"]},
+                   "exec": {"path": "/bin/true",
+                            "args": ["topic", "$topic", "username",
+                                     "$username"],
+                            "timeout": 1}}],
+        "workers": 2
+    }
+    r = Reactor(options, "inproc://test")
+    sub.recv = [
+        [b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"org.reactobus", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"org.linaro.validation", b"uuid2", b"2016", b"lavauser", b"{}"],
+        [b"org.reactobus.lava", b"uuid3", b"2016", b"lavauser", b"{}"],
+    ]
+    with pytest.raises(IndexError):
+        r.run()
+
+    assert len(r.matchers) == 1
+    assert r.matchers[0].name == "first test"
+    assert len(r.workers) == 2
+    assert r.workers[0].started
+    assert r.workers[1].started
+    assert sub.recv == []
+    assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
+                            b"2016", b"lavauser", b"{}"],
+                           [b"0", b"org.linaro.validation", b"uuid2",
+                            b"2016", b"lavauser", b"{}"],
+                           [b"0", b"org.reactobus.lava", b"uuid3",
                             b"2016", b"lavauser", b"{}"]]

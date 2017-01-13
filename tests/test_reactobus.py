@@ -153,7 +153,7 @@ def test_reactor(tmpdir):
         f.write("  - name: org.videolan.git\n")
         f.write("    match:\n")
         f.write("      field: topic\n")
-        f.write("      pattern: ^org\.videolan\.git$\n")
+        f.write("      patterns: ^org\.videolan\.git$\n")
         f.write("    exec:\n")
         f.write("      path: %s\n" % script)
         f.write("      timeout: 1\n")
@@ -214,6 +214,114 @@ def test_reactor(tmpdir):
         assert lines[1] == "vidéolan-git\n"
         assert lines[2] == "url\n"
         assert lines[3] == "https://code.videolan.org/éêï"
+
+
+def test_reactor_multiple_patterns(tmpdir):
+    conf_filename = str(tmpdir.join("conf.yaml"))
+    pull_url = tmpdir.join("input.socket")
+    inbound = tmpdir.join("inbound")
+    outbound = tmpdir.join("outbound")
+    stdout = tmpdir.join("stdout")
+    stderr = tmpdir.join("stderr")
+    script = tmpdir.join("script.sh")
+    script_stdin = tmpdir.join("script.stdin")
+    script_args = tmpdir.join("script.args")
+
+    with open(str(script), "w") as f:
+        f.write("#!/bin/sh\n")
+        f.write("touch %s\n" % script_stdin)
+        f.write("touch %s\n" % script_args)
+        f.write("cat /dev/stdin >> %s\n" % script_stdin)
+        f.write("echo $@ >> %s\n" % script_args)
+    os.chmod(str(script), 0o755)
+
+    with open(conf_filename, "w") as f:
+        f.write("inputs:\n")
+        f.write("- class: ZMQPull\n")
+        f.write("  name: testing-input\n")
+        f.write("  options:\n")
+        f.write("    url: ipc://%s\n" % pull_url)
+        f.write("reactor:\n")
+        f.write("  workers: 2\n")
+        f.write("  rules:\n")
+        f.write("  - name: org.videolan.git\n")
+        f.write("    match:\n")
+        f.write("      field: topic\n")
+        f.write("      patterns: [hello.world, ^org\.videolan\.git$]\n")
+        f.write("    exec:\n")
+        f.write("      path: %s\n" % script)
+        f.write("      timeout: 1\n")
+        f.write("      args:\n")
+        f.write("      - topic\n")
+        f.write("      - $topic\n")
+        f.write("      - data.url\n")
+        f.write("      - $data.url\n")
+        f.write("      - data\n")
+        f.write("      - $data\n")
+        f.write("      - stdin:user\n")
+        f.write("      - stdin:$username\n")
+        f.write("      - stdin:url\n")
+        f.write("      - stdin:$data.url\n")
+        f.write("core:\n")
+        f.write("  inbound: ipc://%s\n" % inbound)
+        f.write("  outbound: ipc://%s\n" % outbound)
+    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+            "--log-file", "-"]
+    proc = subprocess.Popen(args,
+                            stdout=open(str(stdout), "w"),
+                            stderr=open(str(stderr), "w"))
+
+    ctx = zmq.Context.instance()
+    in_sock = ctx.socket(zmq.PUSH)
+    in_sock.connect("ipc://%s" % pull_url)
+
+    # Allow the process sometime to setup and connect
+    time.sleep(1)
+
+    data = {"url": "https://code.videolan.org/éêï",
+            "username": "git"}
+    in_sock.send_multipart([b"org.videolan.git",
+                            b(str(uuid.uuid1())),
+                            b(datetime.datetime.utcnow().isoformat()),
+                            b("vidéolan-git"),
+                            b(json.dumps(data))])
+    time.sleep(1)
+    in_sock.send_multipart([b"something",
+                            b(str(uuid.uuid1())),
+                            b(datetime.datetime.utcnow().isoformat()),
+                            b("git"),
+                            b(json.dumps(data))])
+    in_sock.send_multipart([b"hello.world",
+                            b(str(uuid.uuid1())),
+                            b(datetime.datetime.utcnow().isoformat()),
+                            b("git"),
+                            b(json.dumps(data))])
+
+    time.sleep(1)
+    proc.terminate()
+    proc.wait()
+
+    with open(str(script_args), "r") as f:
+        lines = f.readlines()
+        assert len(lines) == 2
+        (begin, data_recv) = lines[0].split("{")
+        data_recv = json.loads("{" + data_recv)
+        assert data == data_recv
+        assert begin == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
+        (begin, data_recv) = lines[1].split("{")
+        data_recv = json.loads("{" + data_recv)
+        assert data == data_recv
+        assert begin == "topic hello.world data.url https://code.videolan.org/éêï data "
+    with open(str(script_stdin), "r") as f:
+        lines = f.readlines()
+        assert len(lines) == 7
+        assert lines[0] == "user\n"
+        assert lines[1] == "vidéolan-git\n"
+        assert lines[2] == "url\n"
+        assert lines[3] == "https://code.videolan.org/éêïuser\n"
+        assert lines[4] == "git\n"
+        assert lines[5] == "url\n"
+        assert lines[6] == "https://code.videolan.org/éêï"
 
 
 def test_encryption(tmpdir):

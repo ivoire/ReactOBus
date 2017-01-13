@@ -25,49 +25,49 @@ from ReactOBus.reactor import Matcher
 
 rule_1 = {"name": "first test",
           "match": {"field": "topic",
-                    "pattern": "^org.reactobus.lava"},
+                    "patterns": "^org.reactobus.lava"},
           "exec": {"path": "/bin/true",
                    "args": ["topic", "$topic", "username", "$username"],
                    "timeout": 1}}
 
 rule_2 = {"name": "second test",
           "match": {"field": "username",
-                    "pattern": ".*kernel.*"},
+                    "patterns": ".*kernel.*"},
           "exec": {"path": "/bin/true",
                    "args": ["topic", "$topic", "username", "$username"],
                    "timeout": 1}}
 
 rule_3 = {"name": "data matching",
           "match": {"field": "data.submitter",
-                    "pattern": "kernel-ci"},
+                    "patterns": "kernel-ci"},
           "exec": {"path": "/bin/true",
                    "args": ["topic", "$topic", "submitter", "$data.submitter"],
                    "timeout": 1}}
 
 rule_4 = {"name": "non_existing_binary",
           "match": {"field": "topic",
-                    "pattern": "^org.reactobus.lava"},
+                    "patterns": "^org.reactobus.lava"},
           "exec": {"path": "not_in_path",
                    "args": ["topic", "$topic", "username", "$username"],
                    "timeout": 1}}
 
 rule_5 = {"name": "non_existing_field",
           "match": {"field": "topi",
-                    "pattern": "^org.reactobus.lava"},
+                    "patterns": "^org.reactobus.lava"},
           "exec": {"path": "/bin/true",
                    "args": ["topic", "$topi", "username", "$username"],
                    "timeout": 1}}
 
 rule_6 = {"name": "empty_in_args",
           "match": {"field": "topic",
-                    "pattern": "^org.reactobus.lava"},
+                    "patterns": "^org.reactobus.lava"},
           "exec": {"path": "/bin/true",
                    "args": [],
                    "timeout": 1}}
 
 rule_7 = {"name": "stdin",
           "match": {"field": "topic",
-                    "pattern": "^org.reactobus.lava"},
+                    "patterns": "^org.reactobus.lava"},
           "exec": {"path": "/bin/true",
                    "args": ["stdin", "stdin:hello", "stdin:$topic",
                             "$data.submitter", "stdin:$data.submitter"],

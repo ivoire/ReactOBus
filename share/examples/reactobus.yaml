@@ -24,7 +24,7 @@ reactor:
   - name: org.reactobus
     match:
       field: topic
-      pattern: ^org\.reactobus\.
+      patterns: ^org\.reactobus\.
     exec:
       path: share/examples/react.sh
       timeout: 2
