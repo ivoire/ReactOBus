@@ -78,7 +78,6 @@ class ZMQ(Output):
                 self.pipeline.append(Filter(pipe["field"], pipe["pattern"]))
 
     def filter(self, msg):
-        print("self.pipeline=%s" % self.pipeline)
         if not self.pipeline:
             return False
         (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
@@ -106,7 +105,11 @@ class ZMQ(Output):
 
             last_heart_beat = time.time()
             while True:
-                sockets = dict(poller.poll(self.heartbeat.timeout * 1000))
+                # Compute the right timeout depending on the last heartbeat.
+                timeout = self.heartbeat.timeout - (time.time() - last_heart_beat)
+
+                # Wait for a message or the timeout
+                sockets = dict(poller.poll(timeout * 1000))
                 if sockets.get(self.sub) == zmq.POLLIN:
                     msg = self.sub.recv_multipart()
                     if self.filter(msg):
