@@ -63,6 +63,9 @@ The encryption keys are both mandatory:
 * *clients*: the path to a directory containing the public certificates of the PUSH sockets
 
 
+.. note:: You should create a zmq CURVE certificate in order to use encryption.
+  Read the section :ref:`create_curve_certificate` for more information.
+
 ZMQSub
 ******
 
@@ -300,3 +303,25 @@ An event will match if and only if its topic is *org.reactobus.ci* and its
 username is *git-ci*.
 
 The filtering uses the same algorithm as the :ref:`reactor`.
+
+
+.. _create_curve_certificate:
+
+Creating a CURVE certificate
+****************************
+
+The pyzmq Python library does provide the tools to `create the CURVE
+certificates
+<http://pyzmq.readthedocs.io/en/latest/api/zmq.auth.html#zmq.auth.create_certificates>`_.
+
+The following python code will create the certificate:
+
+.. code-block:: python
+
+    import zmq.auth
+    zmq.auth.create_certificates("cert_dir", "cert_name")
+
+This function will create two files in the given directory:
+
+* *cert_name.key*: the public key
+* *cert_name.key_secret*: the private key
