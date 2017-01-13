@@ -110,14 +110,6 @@ class ZMQ(Output):
 
                 # Wait for a message or the timeout
                 sockets = dict(poller.poll(timeout * 1000))
-                if sockets.get(self.sub) == zmq.POLLIN:
-                    msg = self.sub.recv_multipart()
-                    if self.filter(msg):
-                        continue
-                    self.LOG.debug(msg)
-                    self.sock.send_multipart(msg)
-
-                # Do we have to send a message
                 # We send heartbeats evenif events where send.
                 now = time.time()
                 interval = now - last_heart_beat
@@ -126,6 +118,15 @@ class ZMQ(Output):
                     last_heart_beat = now
                     self.sock.send_multipart([b(self.heartbeat.topic),
                                               b("%0.4f" % interval)])
+
+                # Do we have to send a message
+                if sockets.get(self.sub) == zmq.POLLIN:
+                    msg = self.sub.recv_multipart()
+                    if self.filter(msg):
+                        continue
+                    self.LOG.debug(msg)
+                    self.sock.send_multipart(msg)
+
 
 
 class ZMQPub(ZMQ):
