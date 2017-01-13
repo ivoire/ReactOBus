@@ -107,13 +107,14 @@ class ZMQ(Output):
             while True:
                 # Compute the right timeout depending on the last heartbeat.
                 timeout = self.heartbeat.timeout - (time.time() - last_heart_beat)
+                timeout = max(1, timeout * 1000)
 
                 # Wait for a message or the timeout
-                sockets = dict(poller.poll(timeout * 1000))
+                sockets = dict(poller.poll(timeout))
                 # We send heartbeats evenif events where send.
                 now = time.time()
                 interval = now - last_heart_beat
-                if interval > self.heartbeat.timeout:
+                if interval >= self.heartbeat.timeout:
                     self.LOG.debug("Sending heartbeat")
                     last_heart_beat = now
                     self.sock.send_multipart([b(self.heartbeat.topic),
