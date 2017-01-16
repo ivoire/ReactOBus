@@ -122,6 +122,6 @@ class DB(multiprocessing.Process):
             # Save to DB every 1000 messages or every seconds
             now = time.time()
             if len(self.messages) >= 1000 or now - last_save > 1:
-                LOG.info("saving to db")
+                LOG.info("saving %d messages to db", len(self.messages))
                 self.save_to_db()
                 last_save = now
