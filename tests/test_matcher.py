@@ -19,6 +19,7 @@
 
 import pytest
 import subprocess
+from zmq.utils.strtypes import b
 
 from ReactOBus.reactor import Matcher
 
@@ -157,35 +158,38 @@ def test_run(monkeypatch):
     m_input = ""
     m_timeout = 0
 
-    def mock_check_output(args, stderr, universal_newlines, input, timeout):
+    def mock_check_output(args, stderr, input, timeout):
         nonlocal m_args
         nonlocal m_input
         nonlocal m_timeout
         m_args = args
         m_input = input
         m_timeout = timeout
+        for arg in args:
+            assert isinstance(arg, bytes)
+        assert isinstance(input, bytes)
         return ""
 
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
     m = Matcher(rule_1)
 
     m.run("org.reactobus", "uuid", "0", "lavauser", {})
-    assert m_args == [m.binary, "topic", "org.reactobus", "username",
-                      "lavauser"]
-    assert m_input == ""
+    assert m_args == [b(m.binary), b"topic", b"org.reactobus", b"username",
+                      b"lavauser"]
+    assert m_input == b""
     assert m_timeout == 1
 
     m.run("org.reactobus.test", "uuid", "0", "kernel", {})
-    assert m_args == [m.binary, "topic", "org.reactobus.test", "username",
-                      "kernel"]
-    assert m_input == ""
+    assert m_args == [b(m.binary), b"topic", b"org.reactobus.test", b"username",
+                      b"kernel"]
+    assert m_input == b""
     assert m_timeout == 1
 
     m = Matcher(rule_7)
     m.run("org.reactobus.test", "uuid", "0", "lavaserver",
           {"submitter": "myself"})
-    assert m_args == [m.binary, "stdin", "myself"]
-    assert m_input == "hello\norg.reactobus.test\nmyself"
+    assert m_args == [b(m.binary), b"stdin", b"myself"]
+    assert m_input == b"hello\norg.reactobus.test\nmyself"
     assert m_timeout == 4
 
     m_args = None
@@ -195,8 +199,7 @@ def test_run(monkeypatch):
 
 
 def test_run_raise_oserror(monkeypatch):
-    def mock_check_output_raise_oserror(args, stderr, universal_newlines,
-                                        input, timeout):
+    def mock_check_output_raise_oserror(args, stderr, input, timeout):
         raise OSError
     monkeypatch.setattr(subprocess, "check_output",
                         mock_check_output_raise_oserror)
@@ -206,8 +209,7 @@ def test_run_raise_oserror(monkeypatch):
 
 
 def test_run_raise_subprocesserror(monkeypatch):
-    def mock_check_output_raise_subprocesserror(args, stderr, universal_newlines,
-                                                input, timeout):
+    def mock_check_output_raise_subprocesserror(args, stderr, input, timeout):
         raise OSError
     monkeypatch.setattr(subprocess, "check_output",
                         mock_check_output_raise_subprocesserror)
@@ -217,8 +219,7 @@ def test_run_raise_subprocesserror(monkeypatch):
 
 
 def test_run_raise_timeout(monkeypatch):
-    def mock_check_output_raise_oserror(args, stderr, universal_newlines,
-                                        input, timeout):
+    def mock_check_output_raise_oserror(args, stderr, input, timeout):
         import subprocess
         raise subprocess.TimeoutExpired(args[0], timeout)
     monkeypatch.setattr(subprocess, "check_output",

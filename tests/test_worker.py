@@ -104,13 +104,16 @@ def test_worker_and_matchers(monkeypatch):
     m_input = ""
     m_timeout = 0
 
-    def mock_check_output(args, stderr, universal_newlines, input, timeout):
+    def mock_check_output(args, stderr, input, timeout):
         nonlocal m_args
         nonlocal m_input
         nonlocal m_timeout
         m_args = args
         m_input = input
         m_timeout = timeout
+        for arg in args:
+            assert isinstance(arg, bytes)
+        assert isinstance(input, bytes)
         return ""
 
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
@@ -153,8 +156,8 @@ def test_worker_and_matchers(monkeypatch):
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == ["/bin/true", "topic", "org.reactobus.lava",
-                      "username", "lavauser"]
+    assert m_args == [b"/bin/true", b"topic", b"org.reactobus.lava",
+                      b"username", b"lavauser"]
 
     # Create some work for rule_2
     data = [[b"1", b"org.kernel.git", b"", b"", b"kernelci", b"{}"]]
@@ -163,8 +166,8 @@ def test_worker_and_matchers(monkeypatch):
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == ["/bin/true", "topic", "org.kernel.git",
-                      "username", "kernelci"]
+    assert m_args == [b"/bin/true", b"topic", b"org.kernel.git",
+                      b"username", b"kernelci"]
 
     # Create some work for rule_3
     data = [[b"2", b"org.linaro.validation", b"", b"", b"lavauser",
@@ -174,8 +177,8 @@ def test_worker_and_matchers(monkeypatch):
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == ["/bin/true", "topic", "org.linaro.validation",
-                      "submitter", "kernel-ci"]
+    assert m_args == [b"/bin/true", b"topic", b"org.linaro.validation",
+                      b"submitter", b"kernel-ci"]
 
     m_args = []
     # Create some invalid work for rule_3
