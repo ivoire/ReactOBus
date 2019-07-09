@@ -120,7 +120,7 @@ def test_simple_forward(tmpdir):
 
 
 def test_reactor(tmpdir):
-    conf_filename = str(tmpdir.join("conf.yaml"))
+    conf_filename = tmpdir.join("conf.yaml")
     pull_url = tmpdir.join("input.socket")
     inbound = tmpdir.join("inbound")
     outbound = tmpdir.join("outbound")
@@ -136,7 +136,7 @@ def test_reactor(tmpdir):
         f.write("echo $@ > %s\n" % script_args)
     os.chmod(str(script), 0o755)
 
-    with open(conf_filename, "w") as f:
+    with conf_filename.open("w", encoding="utf-8") as f:
         f.write("inputs:\n")
         f.write("- class: ZMQPull\n")
         f.write("  name: testing-input\n")
@@ -153,7 +153,7 @@ def test_reactor(tmpdir):
         f.write("  - name: org.videolan.git\n")
         f.write("    match:\n")
         f.write("      field: topic\n")
-        f.write("      patterns: ^org\.videolan\.git$\n")
+        f.write("      patterns: ^org\\.videolan\\.git$\n")
         f.write("    exec:\n")
         f.write("      path: %s\n" % script)
         f.write("      timeout: 1\n")
@@ -171,7 +171,7 @@ def test_reactor(tmpdir):
         f.write("core:\n")
         f.write("  inbound: ipc://%s\n" % inbound)
         f.write("  outbound: ipc://%s\n" % outbound)
-    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
+    args = ["python3", "reactobus", "--conf", str(conf_filename), "--level", "DEBUG",
             "--log-file", "-"]
     proc = subprocess.Popen(args,
                             stdout=open(str(stdout), "w"),
@@ -201,13 +201,13 @@ def test_reactor(tmpdir):
     proc.terminate()
     proc.wait()
 
-    with open(str(script_args), "r") as f:
+    with script_args.open("r", encoding="utf-8") as f:
         line = f.readlines()[0]
         (begin, data_recv) = line.split("{")
         data_recv = json.loads("{" + data_recv)
         assert data == data_recv
         assert begin == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
-    with open(str(script_stdin), "r") as f:
+    with script_stdin.open("r", encoding="utf-8") as f:
         lines = f.readlines()
         assert len(lines) == 4
         assert lines[0] == "user\n"
@@ -247,7 +247,7 @@ def test_reactor_multiple_patterns(tmpdir):
         f.write("  - name: org.videolan.git\n")
         f.write("    match:\n")
         f.write("      field: topic\n")
-        f.write("      patterns: [hello.world, ^org\.videolan\.git$]\n")
+        f.write("      patterns: [hello.world, ^org\\.videolan\\.git$]\n")
         f.write("    exec:\n")
         f.write("      path: %s\n" % script)
         f.write("      timeout: 1\n")
@@ -301,7 +301,7 @@ def test_reactor_multiple_patterns(tmpdir):
     proc.terminate()
     proc.wait()
 
-    with open(str(script_args), "r") as f:
+    with script_args.open("r", encoding="utf-8") as f:
         lines = f.readlines()
         assert len(lines) == 2
         (begin, data_recv) = lines[0].split("{")
@@ -312,7 +312,7 @@ def test_reactor_multiple_patterns(tmpdir):
         data_recv = json.loads("{" + data_recv)
         assert data == data_recv
         assert begin == "topic hello.world data.url https://code.videolan.org/éêï data "
-    with open(str(script_stdin), "r") as f:
+    with script_stdin.open("r", encoding="utf-8") as f:
         lines = f.readlines()
         assert len(lines) == 7
         assert lines[0] == "user\n"
