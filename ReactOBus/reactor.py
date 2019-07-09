@@ -86,15 +86,15 @@ class Matcher(object):
 
         LOG.debug("Running: %s", args)
         try:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT,
-                                          universal_newlines=True,
-                                          input=stdin_s, timeout=self.timeout)
+            out = subprocess.check_output([b(a)for a in args],
+                                          stderr=subprocess.STDOUT,
+                                          input=b(stdin_s), timeout=self.timeout)
         except subprocess.TimeoutExpired:
             LOG.error("Timeout when running %s", args)
-        except (OSError, subprocess.SubprocessError) as err:
-            LOG.error("Unable to run %s (%s)", args, err)
+        except (OSError, subprocess.SubprocessError) as exc:
+            LOG.error("Unable to run %s (%s)", args, exc)
         else:
-            LOG.debug("=> %s", out)
+            LOG.debug("=> '%s'", u(out))
 
 
 class Worker(threading.Thread):
