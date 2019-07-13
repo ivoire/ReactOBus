@@ -35,13 +35,16 @@ from reactobus.db import Message
 
 
 def test_help():
-    help_str = """usage: reactobus [-h] [-c CONFIG] [-l {DEBUG,ERROR,INFO,WARN}]
+    help_str = """usage: reactobus [--help] [--version] [-c CONFIG] [-l {DEBUG,ERROR,INFO,WARN}]
                  [--log-file LOG_FILE]
 
 optional arguments:
-  -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         ReactOBus configuration
+
+ReactOBus:
+  --help, -h            show this help message and exit
+  --version             print the version number and exit
 
 Logging:
   -l {DEBUG,ERROR,INFO,WARN}, --level {DEBUG,ERROR,INFO,WARN}

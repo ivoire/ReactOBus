@@ -25,6 +25,7 @@ import signal
 import sys
 import yaml
 
+from .__about__ import __version__
 from .core import Core
 
 
@@ -113,7 +114,24 @@ def start_pipeline(stages):
 
 def main():
     # Parse the command line
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # --help and --version
+    misc = parser.add_argument_group("ReactOBus")
+    misc.add_argument(
+        "--help",
+        "-h",
+        action="store_true",
+        default=False,
+        help="show this help message and exit",
+    )
+    misc.add_argument(
+        "--version",
+        action="store_true",
+        default=False,
+        help="print the version number and exit",
+    )
+
     parser.add_argument(
         "-c", "--config", default="/etc/reactobus.yaml", help="ReactOBus configuration"
     )
@@ -131,6 +149,15 @@ def main():
     )
 
     options = parser.parse_args()
+
+    # Do we have to print the version numer?
+    if options.version:
+        print("ReactOBus %s" % __version__)
+        return 0
+
+    if options.help:
+        parser.print_help()
+        return 0
 
     # Configure logging
     configure_logger(options.log_file, options.level)
