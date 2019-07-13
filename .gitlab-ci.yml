@@ -17,9 +17,6 @@ stages:
       junit:
       - reactobus.xml
 
-test-debian-8:
-  <<: *test
-  image: debian:8
 test-debian-9:
   <<: *test
   image: debian:9
