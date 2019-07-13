@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set ts=4
 
-# Copyright 2016 Rémi Duraffort
+# Copyright 2016-2019 Rémi Duraffort
 # This file is part of ReactOBus.
 #
 # ReactOBus is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ import signal
 import sys
 import yaml
 
-from ReactOBus.core import Core
+from .core import Core
 
 
 FORMAT = "%(asctime)-15s %(levelname)7s %(name)s %(message)s"
@@ -51,10 +51,10 @@ def configure_logger(log_file, level):
 
 
 def configure_pipeline(conffile):
-    from ReactOBus.inputs import Input
+    from .inputs import Input
 
     # TODO: only import if needed
-    from ReactOBus.outputs import Output
+    from .outputs import Output
 
     LOG.info("Creating the pipeline")
     with open(conffile, encoding="utf-8") as f_in:
@@ -82,13 +82,13 @@ def configure_pipeline(conffile):
     core = [Core(conf["core"]["inbound"], conf["core"]["outbound"])]
     if conf.get("reactor", None) is not None:
         # Import the Reactor only when used
-        from ReactOBus.reactor import Reactor
+        from .reactor import Reactor
 
         core.append(Reactor(conf["reactor"], conf["core"]["outbound"]))
 
     if conf.get("db", None) is not None:
         # Import DB here (hence also SQLAlchemy) only when needed
-        from ReactOBus.db import DB
+        from .db import DB
 
         core.append(DB(conf["db"], conf["core"]["outbound"]))
 
@@ -163,7 +163,3 @@ def main():
         t.join()
 
     LOG.info("Leaving")
-
-
-if __name__ == "__main__":
-    main()

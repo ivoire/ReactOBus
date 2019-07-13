@@ -28,7 +28,7 @@ def test_core(monkeypatch, tmpdir):
     zmq_instance = mock.ZMQContextInstance()
     monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
 
-    from ReactOBus.core import Core
+    from reactobus.core import Core
 
     # Create the sockets
     inbound = "ipc://%s" % tmpdir.join("ReactOBus.test.inbound")

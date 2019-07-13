@@ -25,7 +25,7 @@ from . import mock
 
 
 def test_select():
-    from ReactOBus.outputs import Output, ZMQPush, ZMQPub
+    from reactobus.outputs import Output, ZMQPush, ZMQPub
 
     i = Output.select("ZMQPush", "pull", {"url": ""}, "")
     assert isinstance(i, ZMQPush)
@@ -38,7 +38,7 @@ def test_select():
 
 
 def test_zmq_class():
-    from ReactOBus.outputs import ZMQ
+    from reactobus.outputs import ZMQ
 
     with pytest.raises(NotImplementedError):
         ZMQ("", {"url": ""}, "").secure_setup()
@@ -46,13 +46,13 @@ def test_zmq_class():
 
 def test_zmq_push(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
-    import ReactOBus.utils
+    import reactobus.utils
 
-    imp.reload(ReactOBus.utils)
-    import ReactOBus.outputs
+    imp.reload(reactobus.utils)
+    import reactobus.outputs
 
-    imp.reload(ReactOBus.outputs)
-    from ReactOBus.outputs import ZMQPush
+    imp.reload(reactobus.outputs)
+    from reactobus.outputs import ZMQPush
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)
@@ -89,13 +89,13 @@ def test_zmq_push(monkeypatch, tmpdir):
 
 def test_zmq_pub(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
-    import ReactOBus.utils
+    import reactobus.utils
 
-    imp.reload(ReactOBus.utils)
-    import ReactOBus.outputs
+    imp.reload(reactobus.utils)
+    import reactobus.outputs
 
-    imp.reload(ReactOBus.outputs)
-    from ReactOBus.outputs import ZMQPub
+    imp.reload(reactobus.outputs)
+    from reactobus.outputs import ZMQPub
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)

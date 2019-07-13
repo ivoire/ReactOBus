@@ -31,7 +31,7 @@ from zmq.auth import create_certificates, load_certificate
 from zmq.auth.thread import ThreadAuthenticator
 from zmq.utils.strtypes import b
 
-from ReactOBus.db import Message
+from reactobus.db import Message
 
 
 def test_help():
@@ -50,7 +50,7 @@ Logging:
 """
     assert (
         subprocess.check_output(
-            ["python3", "reactobus", "--help"], universal_newlines=True
+            ["python3", "-m", "reactobus", "--help"], universal_newlines=True
         )
         == help_str
     )
@@ -83,6 +83,7 @@ def test_simple_forward(tmpdir):
         f.write("    url: ipc://%s\n" % push_url)
     args = [
         "python3",
+        "-m",
         "reactobus",
         "--conf",
         conf_filename,
@@ -188,6 +189,7 @@ def test_reactor(tmpdir):
         f.write("  outbound: ipc://%s\n" % outbound)
     args = [
         "python3",
+        "-m",
         "reactobus",
         "--conf",
         str(conf_filename),
@@ -300,6 +302,7 @@ def test_reactor_multiple_patterns(tmpdir):
         f.write("  outbound: ipc://%s\n" % outbound)
     args = [
         "python3",
+        "-m",
         "reactobus",
         "--conf",
         conf_filename,
@@ -426,6 +429,7 @@ def test_encryption(tmpdir):
         f.write("    url: ipc://%s\n" % push_url)
     args = [
         "python3",
+        "-m",
         "reactobus",
         "--conf",
         conf_filename,

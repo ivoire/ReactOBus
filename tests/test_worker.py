@@ -21,7 +21,7 @@ import pytest
 import subprocess
 import zmq
 
-from ReactOBus.reactor import Matcher, Worker
+from reactobus.reactor import Matcher, Worker
 from . import mock
 
 

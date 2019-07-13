@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
-from ReactOBus.filters import Filter
+from reactobus.filters import Filter
 
 
 def test_filters():

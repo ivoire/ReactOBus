@@ -21,7 +21,7 @@ import pytest
 import subprocess
 from zmq.utils.strtypes import b
 
-from ReactOBus.reactor import Matcher
+from reactobus.reactor import Matcher
 
 
 rule_1 = {

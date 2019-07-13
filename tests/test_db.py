@@ -34,7 +34,7 @@ def test_run(monkeypatch, tmpdir):
     monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
     monkeypatch.setattr(zmq, "Poller", mock.ZMQPoller)
 
-    from ReactOBus.db import DB, Message
+    from reactobus.db import DB, Message
 
     dbname = tmpdir.join("testing.sqlite3")
     db_url = "sqlite:///%s" % dbname
@@ -149,10 +149,10 @@ def test_errors(monkeypatch, tmpdir):
     monkeypatch.setattr(zmq, "Poller", mock.ZMQPoller)
 
     # Reload the module to apply the monkey patching
-    import ReactOBus.db
-    from ReactOBus.db import DB
+    import reactobus.db
+    from reactobus.db import DB
 
-    imp.reload(ReactOBus.db)
+    imp.reload(reactobus.db)
 
     # Create the DB
     dbname = tmpdir.join("testing.sqlite3")

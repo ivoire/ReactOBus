@@ -25,7 +25,7 @@ from . import mock
 
 
 def test_select():
-    from ReactOBus.inputs import Input, ZMQPull, ZMQSub
+    from reactobus.inputs import Input, ZMQPull, ZMQSub
 
     i = Input.select("ZMQPull", "pull", {"url": ""}, "")
     assert isinstance(i, ZMQPull)
@@ -38,7 +38,7 @@ def test_select():
 
 
 def test_zmq_class():
-    from ReactOBus.inputs import ZMQ
+    from reactobus.inputs import ZMQ
 
     with pytest.raises(NotImplementedError):
         ZMQ("", {"url": ""}, "").secure_setup()
@@ -46,13 +46,13 @@ def test_zmq_class():
 
 def test_zmq_pull(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
-    import ReactOBus.utils
+    import reactobus.utils
 
-    imp.reload(ReactOBus.utils)
-    import ReactOBus.inputs
+    imp.reload(reactobus.utils)
+    import reactobus.inputs
 
-    imp.reload(ReactOBus.inputs)
-    from ReactOBus.inputs import ZMQPull
+    imp.reload(reactobus.inputs)
+    from reactobus.inputs import ZMQPull
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)
@@ -91,13 +91,13 @@ def test_zmq_pull(monkeypatch, tmpdir):
 
 def test_zmq_pull_filtering(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
-    import ReactOBus.utils
+    import reactobus.utils
 
-    imp.reload(ReactOBus.utils)
-    import ReactOBus.inputs
+    imp.reload(reactobus.utils)
+    import reactobus.inputs
 
-    imp.reload(ReactOBus.inputs)
-    from ReactOBus.inputs import ZMQPull
+    imp.reload(reactobus.inputs)
+    from reactobus.inputs import ZMQPull
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)
@@ -164,13 +164,13 @@ def test_zmq_pull_filtering(monkeypatch, tmpdir):
 
 def test_zmq_sub(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
-    import ReactOBus.utils
+    import reactobus.utils
 
-    imp.reload(ReactOBus.utils)
-    import ReactOBus.inputs
+    imp.reload(reactobus.utils)
+    import reactobus.inputs
 
-    imp.reload(ReactOBus.inputs)
-    from ReactOBus.inputs import ZMQSub
+    imp.reload(reactobus.inputs)
+    from reactobus.inputs import ZMQSub
 
     # Replace zmq.Context.instance()
     imp.reload(zmq)

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with ReactOBus.  If not, see <http://www.gnu.org/licenses/>
 
-from ReactOBus.utils import lookup, Pipe
-from ReactOBus.reactor import Matcher
 import pytest
+
+from reactobus.utils import lookup, Pipe
+from reactobus.reactor import Matcher
 
 
 class PipeTest(Pipe):

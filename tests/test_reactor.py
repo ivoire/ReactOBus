@@ -36,11 +36,11 @@ def test_reactor(monkeypatch):
     # Replace zmq.Context.instance()
     zmq_instance = mock.ZMQContextInstance()
     monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
-    import ReactOBus.reactor
+    import reactobus.reactor
 
-    monkeypatch.setattr(ReactOBus.reactor, "Worker", MockWorker)
+    monkeypatch.setattr(reactobus.reactor, "Worker", MockWorker)
 
-    from ReactOBus.reactor import Reactor
+    from reactobus.reactor import Reactor
 
     options = {"rules": {}, "workers": 0}
     r = Reactor(options, "inproc://test")
