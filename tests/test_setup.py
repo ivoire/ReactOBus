@@ -31,11 +31,11 @@ def is_pandoc_available():
         return False
 
 
-@pytest.mark.skipif(not is_pandoc_available(),
-                    reason="'pandoc' not installed")
+@pytest.mark.skipif(not is_pandoc_available(), reason="'pandoc' not installed")
 def test_long_description(monkeypatch):
     def mock_setup(**args):
         pass
+
     monkeypatch.setattr(setuptools, "setup", mock_setup)
 
     from setup import long_description

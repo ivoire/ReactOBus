@@ -56,10 +56,12 @@ class Matcher(object):
             return False
 
     def build_args(self, topic, uuid, datetime, username, data):
-        variables = {"topic": topic,
-                     "uuid": uuid,
-                     "datetime": datetime,
-                     "username": username}
+        variables = {
+            "topic": topic,
+            "uuid": uuid,
+            "datetime": datetime,
+            "username": username,
+        }
 
         args = [self.binary]
         stdin = []
@@ -78,17 +80,19 @@ class Matcher(object):
 
     def run(self, topic, uuid, datetime, username, data):
         try:
-            (args, stdin_s) = self.build_args(topic, uuid, datetime, username,
-                                              data)
+            (args, stdin_s) = self.build_args(topic, uuid, datetime, username, data)
         except KeyError as exc:
             LOG.error("Unable to build the argument list: %s", exc)
             return
 
         LOG.debug("Running: %s", args)
         try:
-            out = subprocess.check_output([b(a)for a in args],
-                                          stderr=subprocess.STDOUT,
-                                          input=b(stdin_s), timeout=self.timeout)
+            out = subprocess.check_output(
+                [b(a) for a in args],
+                stderr=subprocess.STDOUT,
+                input=b(stdin_s),
+                timeout=self.timeout,
+            )
         except subprocess.TimeoutExpired:
             LOG.error("Timeout when running %s", args)
         except (OSError, subprocess.SubprocessError) as exc:
@@ -112,10 +116,8 @@ class Worker(threading.Thread):
                 matcher_index = int(msg[0])
                 (topic, uuid, dt, username, data) = (u(m) for m in msg[1:])
                 data_parsed = json.loads(data)
-                LOG.debug("Running matcher num %d on %s",
-                          matcher_index, self.name)
-                self.matchers[matcher_index].run(topic, uuid, dt,
-                                                 username, data_parsed)
+                LOG.debug("Running matcher num %d on %s", matcher_index, self.name)
+                self.matchers[matcher_index].run(topic, uuid, dt, username, data_parsed)
             # No need to except JSONDecodeError which is a subclass of
             # ValueError. Moreover, in python3.4 JSONDecodeError does not
             # exist.
@@ -169,16 +171,15 @@ class Reactor(multiprocessing.Process):
                 LOG.error("Invalid message: %s", msg)
                 continue
 
-            variables = {"topic": u(topic),
-                         "uuid": u(uuid),
-                         "datetime": u(datetime),
-                         "username": u(username)}
+            variables = {
+                "topic": u(topic),
+                "uuid": u(uuid),
+                "datetime": u(datetime),
+                "username": u(username),
+            }
             for (i, m) in enumerate(self.matchers):
                 if m.match(variables, data_parsed):
                     LOG.debug("%s matching %s", msg, m.name)
-                    self.ctrl.send_multipart([b(str(i)),
-                                              topic,
-                                              uuid,
-                                              datetime,
-                                              username,
-                                              data])
+                    self.ctrl.send_multipart(
+                        [b(str(i)), topic, uuid, datetime, username, data]
+                    )

@@ -179,14 +179,10 @@ setup(
     license="AGPLv3+",
     packages=["ReactOBus"],
     scripts=["reactobus"],
-    install_requires=[
-        "PyYAML",
-        "pyzmq",
-        "setproctitle"
-    ],
+    install_requires=["PyYAML", "pyzmq", "setproctitle"],
     extras_require={
         # SQLAlchemy is optional because the ReactOBus.db module is loaded only
         # when used
-        'db':  ["SQLAlchemy"]
-    }
+        "db": ["SQLAlchemy"]
+    },
 )

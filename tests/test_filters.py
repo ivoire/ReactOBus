@@ -22,9 +22,15 @@ from ReactOBus.filters import Filter
 
 def test_filters():
     f = Filter("username", "kernel-ci")
-    assert f.match({"topic": "testing.data", "username": "kernel-ci"}, {"hello": "world"})
-    assert not f.match({"topic": "testing.data", "username": "1kernel-ci"}, {"hello": "world"})
-    assert f.match({"topic": "testing.data", "username": "kernel-ci2"}, {"hello": "world"})
+    assert f.match(
+        {"topic": "testing.data", "username": "kernel-ci"}, {"hello": "world"}
+    )
+    assert not f.match(
+        {"topic": "testing.data", "username": "1kernel-ci"}, {"hello": "world"}
+    )
+    assert f.match(
+        {"topic": "testing.data", "username": "kernel-ci2"}, {"hello": "world"}
+    )
 
     assert not f.match({}, {"username": "kernel-ci"})
     assert not f.match({"hello": "world"}, {"username": "kernel-ci"})

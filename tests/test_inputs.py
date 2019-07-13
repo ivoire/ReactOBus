@@ -47,8 +47,10 @@ def test_zmq_class():
 def test_zmq_pull(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils
+
     imp.reload(ReactOBus.utils)
     import ReactOBus.inputs
+
     imp.reload(ReactOBus.inputs)
     from ReactOBus.inputs import ZMQPull
 
@@ -66,9 +68,10 @@ def test_zmq_pull(monkeypatch, tmpdir):
     push = zmq_instance.socket(zmq.PUSH)
 
     # send an invalid message then a valid one
-    data = [[b"test"],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"]]
+    data = [
+        [b"test"],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     pull.recv.extend(data)
 
     p = ZMQPull("pull", {"url": url}, inbound)
@@ -81,15 +84,18 @@ def test_zmq_pull(monkeypatch, tmpdir):
 
     assert push.url == inbound
     assert push.connected and not push.bound
-    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
-                          b"testing", b"{}"]]
+    assert push.send == [
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"]
+    ]
 
 
 def test_zmq_pull_filtering(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils
+
     imp.reload(ReactOBus.utils)
     import ReactOBus.inputs
+
     imp.reload(ReactOBus.inputs)
     from ReactOBus.inputs import ZMQPull
 
@@ -108,16 +114,16 @@ def test_zmq_pull_filtering(monkeypatch, tmpdir):
 
     # send valid message that will be filtered out
     data = [
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"rob", b"{}"],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"],
-            ]
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"rob", b"{}"],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     pull.recv.extend(data)
 
-    p = ZMQPull("pull", {"url": url,
-                         "filters": [{"field": "username", "pattern": "rob"}]},
-                inbound)
+    p = ZMQPull(
+        "pull",
+        {"url": url, "filters": [{"field": "username", "pattern": "rob"}]},
+        inbound,
+    )
     with pytest.raises(IndexError):
         p.run()
 
@@ -127,22 +133,21 @@ def test_zmq_pull_filtering(monkeypatch, tmpdir):
 
     assert push.url == inbound
     assert push.connected and not push.bound
-    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
-                          b"rob", b"{}"]]
+    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15", b"rob", b"{}"]]
 
     # send valid message that will be filtered out
     data = [
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"rob", b'{"hello": "world"}'],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"],
-            ]
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"rob", b'{"hello": "world"}'],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     push.send = []
     pull.recv.extend(data)
 
-    p = ZMQPull("pull", {"url": url,
-                         "filters": [{"field": "data.hello", "pattern": "world"}]},
-                inbound)
+    p = ZMQPull(
+        "pull",
+        {"url": url, "filters": [{"field": "data.hello", "pattern": "world"}]},
+        inbound,
+    )
     with pytest.raises(IndexError):
         p.run()
 
@@ -152,15 +157,18 @@ def test_zmq_pull_filtering(monkeypatch, tmpdir):
 
     assert push.url == inbound
     assert push.connected and not push.bound
-    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
-                          b"rob", b'{"hello": "world"}']]
+    assert push.send == [
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"rob", b'{"hello": "world"}']
+    ]
 
 
 def test_zmq_sub(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils
+
     imp.reload(ReactOBus.utils)
     import ReactOBus.inputs
+
     imp.reload(ReactOBus.inputs)
     from ReactOBus.inputs import ZMQSub
 
@@ -178,9 +186,10 @@ def test_zmq_sub(monkeypatch, tmpdir):
     push = zmq_instance.socket(zmq.PUSH)
 
     # send an invalid message then a valid one
-    data = [[b"test"],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"]]
+    data = [
+        [b"test"],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     sub.recv.extend(data)
 
     p = ZMQSub("pull", {"url": url}, inbound)
@@ -194,5 +203,6 @@ def test_zmq_sub(monkeypatch, tmpdir):
 
     assert push.url == inbound
     assert push.connected and not push.bound
-    assert push.send == [[b"org.reactobus.test", b"uuid", b"2016-11-15",
-                          b"testing", b"{}"]]
+    assert push.send == [
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"]
+    ]

@@ -19,5 +19,6 @@ def main():
         msg = sock.recv_multipart()
         print(msg)
 
+
 if __name__ == "__main__":
     main()

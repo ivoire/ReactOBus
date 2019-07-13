@@ -36,15 +36,15 @@ def test_run(monkeypatch, tmpdir):
 
     from ReactOBus.db import DB, Message
 
-    dbname = tmpdir.join('testing.sqlite3')
+    dbname = tmpdir.join("testing.sqlite3")
     db_url = "sqlite:///%s" % dbname
-    db = DB({'url': db_url}, "inproc://test_run")
+    db = DB({"url": db_url}, "inproc://test_run")
     with pytest.raises(IndexError):
         db.run()
     sub = zmq_instance.socks[zmq.SUB]
     assert len(sub.recv) == 0
     assert sub.connected is True
-    assert sub.opts == {zmq.SUBSCRIBE: b''}
+    assert sub.opts == {zmq.SUBSCRIBE: b""}
 
     # Test that wrong message will not make the process crash
     sub.recv = [[]]
@@ -57,21 +57,43 @@ def test_run(monkeypatch, tmpdir):
     assert session.query(Message).count() == 0
 
     # Test that wrong message will not make the process crash
-    sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.2", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.3", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.4", str(uuid.uuid1()),
-                 "2016/01/01",
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.5", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})]]
+    sub.recv = [
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.2",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.3",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.4",
+            str(uuid.uuid1()),
+            "2016/01/01",
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.5",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+    ]
     with pytest.raises(IndexError):
         db.run()
     # Force the databse flush
@@ -103,6 +125,7 @@ class SessionMock(object):
     def commit(self):
         self.commits += 1
         from sqlalchemy.exc import SQLAlchemyError
+
         raise SQLAlchemyError
 
 
@@ -121,18 +144,20 @@ def test_errors(monkeypatch, tmpdir):
 
     def mock_sessionmaker(bind):
         return sessions_mock
+
     monkeypatch.setattr(sqlalchemy.orm, "sessionmaker", mock_sessionmaker)
     monkeypatch.setattr(zmq, "Poller", mock.ZMQPoller)
 
     # Reload the module to apply the monkey patching
     import ReactOBus.db
     from ReactOBus.db import DB
+
     imp.reload(ReactOBus.db)
 
     # Create the DB
-    dbname = tmpdir.join('testing.sqlite3')
+    dbname = tmpdir.join("testing.sqlite3")
     db_url = "sqlite:///%s" % dbname
-    db = DB({'url': db_url}, "inproc://test_run")
+    db = DB({"url": db_url}, "inproc://test_run")
 
     # Run a first time to do the setup
     with pytest.raises(IndexError):
@@ -140,12 +165,22 @@ def test_errors(monkeypatch, tmpdir):
     sub = zmq_instance.socks[zmq.SUB]
 
     # Run with two messages
-    sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})]]
+    sub.recv = [
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+    ]
 
     with pytest.raises(IndexError):
         db.run()
@@ -155,12 +190,22 @@ def test_errors(monkeypatch, tmpdir):
     assert sessions_mock.session_mock.commits == 3
 
     # Re-run with two messages but raise on session.add()
-    sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})],
-                ["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})]]
+    sub.recv = [
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+    ]
     sessions_mock.session_mock.raise_on_bulk = True
     sessions_mock.session_mock.messages = 4212
     sessions_mock.session_mock.commits = 0
@@ -172,12 +217,21 @@ def test_errors(monkeypatch, tmpdir):
     assert sessions_mock.session_mock.commits == 0
 
     # Re-run with two invalid messages
-    sub.recv = [["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver"],
-                ["org.reactobus.1", str(uuid.uuid1()),
-                 datetime.datetime.utcnow().isoformat(),
-                 "lavaserver", json.dumps({})]]
+    sub.recv = [
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+        ],
+        [
+            "org.reactobus.1",
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            "lavaserver",
+            json.dumps({}),
+        ],
+    ]
     sessions_mock.session_mock.raise_on_bulk = False
     sessions_mock.session_mock.messages = 0
     sessions_mock.session_mock.commits = 0

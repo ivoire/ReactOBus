@@ -48,8 +48,12 @@ Logging:
                         Log level (DEBUG, ERROR, INFO, WARN), default to INFO
   --log-file LOG_FILE   Log file, use '-' for stdout
 """
-    assert subprocess.check_output(["python3", "reactobus", "--help"],
-                                   universal_newlines=True) == help_str
+    assert (
+        subprocess.check_output(
+            ["python3", "reactobus", "--help"], universal_newlines=True
+        )
+        == help_str
+    )
 
 
 def test_simple_forward(tmpdir):
@@ -77,11 +81,19 @@ def test_simple_forward(tmpdir):
         f.write("  name: testing-out\n")
         f.write("  options:\n")
         f.write("    url: ipc://%s\n" % push_url)
-    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
-            "--log-file", "-"]
-    proc = subprocess.Popen(args,
-                            stdout=open(str(stdout), "w"),
-                            stderr=open(str(stderr), "w"))
+    args = [
+        "python3",
+        "reactobus",
+        "--conf",
+        conf_filename,
+        "--level",
+        "DEBUG",
+        "--log-file",
+        "-",
+    ]
+    proc = subprocess.Popen(
+        args, stdout=open(str(stdout), "w"), stderr=open(str(stderr), "w")
+    )
 
     ctx = zmq.Context.instance()
     in_sock = ctx.socket(zmq.PUSH)
@@ -94,11 +106,13 @@ def test_simple_forward(tmpdir):
 
     # Send many messages
     for i in range(0, 1000):
-        data = [b"org.reactobus.test.py",
-                b(str(uuid.uuid1())),
-                b(datetime.datetime.utcnow().isoformat()),
-                b"py.test",
-                b(json.dumps({'pipeline': True}))]
+        data = [
+            b"org.reactobus.test.py",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b"py.test",
+            b(json.dumps({"pipeline": True})),
+        ]
         in_sock.send_multipart(data)
         assert out_sock.recv_multipart() == data
 
@@ -115,8 +129,9 @@ def test_simple_forward(tmpdir):
 
     session = sessions()
     assert session.query(Message).count() == 1000
-    assert session.query(Message).filter_by(topic="org.reactobus.test.py")\
-                  .count() == 1000
+    assert (
+        session.query(Message).filter_by(topic="org.reactobus.test.py").count() == 1000
+    )
 
 
 def test_reactor(tmpdir):
@@ -171,11 +186,19 @@ def test_reactor(tmpdir):
         f.write("core:\n")
         f.write("  inbound: ipc://%s\n" % inbound)
         f.write("  outbound: ipc://%s\n" % outbound)
-    args = ["python3", "reactobus", "--conf", str(conf_filename), "--level", "DEBUG",
-            "--log-file", "-"]
-    proc = subprocess.Popen(args,
-                            stdout=open(str(stdout), "w"),
-                            stderr=open(str(stderr), "w"))
+    args = [
+        "python3",
+        "reactobus",
+        "--conf",
+        str(conf_filename),
+        "--level",
+        "DEBUG",
+        "--log-file",
+        "-",
+    ]
+    proc = subprocess.Popen(
+        args, stdout=open(str(stdout), "w"), stderr=open(str(stderr), "w")
+    )
 
     ctx = zmq.Context.instance()
     in_sock = ctx.socket(zmq.PUSH)
@@ -184,18 +207,25 @@ def test_reactor(tmpdir):
     # Allow the process sometime to setup and connect
     time.sleep(1)
 
-    data = {"url": "https://code.videolan.org/éêï",
-            "username": "git"}
-    in_sock.send_multipart([b"org.videolan.git",
-                            b(str(uuid.uuid1())),
-                            b(datetime.datetime.utcnow().isoformat()),
-                            b("vidéolan-git"),
-                            b(json.dumps(data))])
-    in_sock.send_multipart([b"org.videolan.git",
-                            b(str(uuid.uuid1())),
-                            b(datetime.datetime.utcnow().isoformat()),
-                            b("git"),
-                            b(json.dumps(data))])
+    data = {"url": "https://code.videolan.org/éêï", "username": "git"}
+    in_sock.send_multipart(
+        [
+            b"org.videolan.git",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("vidéolan-git"),
+            b(json.dumps(data)),
+        ]
+    )
+    in_sock.send_multipart(
+        [
+            b"org.videolan.git",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("git"),
+            b(json.dumps(data)),
+        ]
+    )
 
     time.sleep(1)
     proc.terminate()
@@ -206,7 +236,10 @@ def test_reactor(tmpdir):
         (begin, data_recv) = line.split("{")
         data_recv = json.loads("{" + data_recv)
         assert data == data_recv
-        assert begin == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
+        assert (
+            begin
+            == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
+        )
     with script_stdin.open("r", encoding="utf-8") as f:
         lines = f.readlines()
         assert len(lines) == 4
@@ -265,11 +298,19 @@ def test_reactor_multiple_patterns(tmpdir):
         f.write("core:\n")
         f.write("  inbound: ipc://%s\n" % inbound)
         f.write("  outbound: ipc://%s\n" % outbound)
-    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
-            "--log-file", "-"]
-    proc = subprocess.Popen(args,
-                            stdout=open(str(stdout), "w"),
-                            stderr=open(str(stderr), "w"))
+    args = [
+        "python3",
+        "reactobus",
+        "--conf",
+        conf_filename,
+        "--level",
+        "DEBUG",
+        "--log-file",
+        "-",
+    ]
+    proc = subprocess.Popen(
+        args, stdout=open(str(stdout), "w"), stderr=open(str(stderr), "w")
+    )
 
     ctx = zmq.Context.instance()
     in_sock = ctx.socket(zmq.PUSH)
@@ -278,24 +319,35 @@ def test_reactor_multiple_patterns(tmpdir):
     # Allow the process sometime to setup and connect
     time.sleep(1)
 
-    data = {"url": "https://code.videolan.org/éêï",
-            "username": "git"}
-    in_sock.send_multipart([b"org.videolan.git",
-                            b(str(uuid.uuid1())),
-                            b(datetime.datetime.utcnow().isoformat()),
-                            b("vidéolan-git"),
-                            b(json.dumps(data))])
+    data = {"url": "https://code.videolan.org/éêï", "username": "git"}
+    in_sock.send_multipart(
+        [
+            b"org.videolan.git",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("vidéolan-git"),
+            b(json.dumps(data)),
+        ]
+    )
     time.sleep(1)
-    in_sock.send_multipart([b"something",
-                            b(str(uuid.uuid1())),
-                            b(datetime.datetime.utcnow().isoformat()),
-                            b("git"),
-                            b(json.dumps(data))])
-    in_sock.send_multipart([b"hello.world",
-                            b(str(uuid.uuid1())),
-                            b(datetime.datetime.utcnow().isoformat()),
-                            b("git"),
-                            b(json.dumps(data))])
+    in_sock.send_multipart(
+        [
+            b"something",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("git"),
+            b(json.dumps(data)),
+        ]
+    )
+    in_sock.send_multipart(
+        [
+            b"hello.world",
+            b(str(uuid.uuid1())),
+            b(datetime.datetime.utcnow().isoformat()),
+            b("git"),
+            b(json.dumps(data)),
+        ]
+    )
 
     time.sleep(1)
     proc.terminate()
@@ -307,7 +359,10 @@ def test_reactor_multiple_patterns(tmpdir):
         (begin, data_recv) = lines[0].split("{")
         data_recv = json.loads("{" + data_recv)
         assert data == data_recv
-        assert begin == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
+        assert (
+            begin
+            == "topic org.videolan.git data.url https://code.videolan.org/éêï data "
+        )
         (begin, data_recv) = lines[1].split("{")
         data_recv = json.loads("{" + data_recv)
         assert data == data_recv
@@ -369,18 +424,28 @@ def test_encryption(tmpdir):
         f.write("  name: out-push\n")
         f.write("  options:\n")
         f.write("    url: ipc://%s\n" % push_url)
-    args = ["python3", "reactobus", "--conf", conf_filename, "--level", "DEBUG",
-            "--log-file", "-"]
-    proc = subprocess.Popen(args,
-                            stdout=open(str(stdout), "w"),
-                            stderr=open(str(stderr), "w"))
+    args = [
+        "python3",
+        "reactobus",
+        "--conf",
+        conf_filename,
+        "--level",
+        "DEBUG",
+        "--log-file",
+        "-",
+    ]
+    proc = subprocess.Popen(
+        args, stdout=open(str(stdout), "w"), stderr=open(str(stderr), "w")
+    )
 
     # Create the input sockets
     ctx = zmq.Context.instance()
     in_sock = ctx.socket(zmq.PUSH)
     (server_public, _) = load_certificate(str(pull_cert_dir.join("pull.key")))
     in_sock.curve_serverkey = server_public
-    (client_public, client_private) = load_certificate(str(pull_clients_cert_dir.join("client1.key_secret")))
+    (client_public, client_private) = load_certificate(
+        str(pull_clients_cert_dir.join("client1.key_secret"))
+    )
     in_sock.curve_publickey = client_public
     in_sock.curve_secretkey = client_private
     in_sock.connect("ipc://%s" % pull_url)
@@ -392,7 +457,9 @@ def test_encryption(tmpdir):
     auth = ThreadAuthenticator(ctx)
     auth.start()
     auth.configure_curve(domain="*", location=str(sub_cert_dir))
-    (server_public, server_secret) = load_certificate(str(sub_cert_dir.join("sub-server.key_secret")))
+    (server_public, server_secret) = load_certificate(
+        str(sub_cert_dir.join("sub-server.key_secret"))
+    )
     pub_sock.curve_publickey = server_public
     pub_sock.curve_secretkey = server_secret
     pub_sock.curve_server = True
@@ -402,22 +469,24 @@ def test_encryption(tmpdir):
     time.sleep(1)
 
     # Send some data
-    data = [b"org.videolan.git",
-            b(str(uuid.uuid1())),
-            b(datetime.datetime.utcnow().isoformat()),
-            b("videolan-git"),
-            b(json.dumps({"url": "https://code.videolan.org/éêï",
-                          "username": "git"}))]
+    data = [
+        b"org.videolan.git",
+        b(str(uuid.uuid1())),
+        b(datetime.datetime.utcnow().isoformat()),
+        b("videolan-git"),
+        b(json.dumps({"url": "https://code.videolan.org/éêï", "username": "git"})),
+    ]
     in_sock.send_multipart(data)
     msg = out_sock.recv_multipart()
     assert msg == data
 
-    data = [b"org.videolan.git",
-            b(str(uuid.uuid1())),
-            b(datetime.datetime.utcnow().isoformat()),
-            b("videolan-git"),
-            b(json.dumps({"url": "https://code.videolan.org/éêï",
-                          "username": "git"}))]
+    data = [
+        b"org.videolan.git",
+        b(str(uuid.uuid1())),
+        b(datetime.datetime.utcnow().isoformat()),
+        b("videolan-git"),
+        b(json.dumps({"url": "https://code.videolan.org/éêï", "username": "git"})),
+    ]
     pub_sock.send_multipart(data)
     msg = out_sock.recv_multipart()
     assert msg == data

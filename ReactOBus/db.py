@@ -104,10 +104,16 @@ class DB(multiprocessing.Process):
                 msg = self.sub.recv_multipart()
                 try:
                     (topic, uuid, dt, username, data) = (u(m) for m in msg)
-                    dt = datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
-                    self.messages.append(Message(topic=topic, uuid=uuid,
-                                                 datetime=dt,
-                                                 username=username, data=data))
+                    dt = datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
+                    self.messages.append(
+                        Message(
+                            topic=topic,
+                            uuid=uuid,
+                            datetime=dt,
+                            username=username,
+                            data=data,
+                        )
+                    )
                 except ValueError:
                     LOG.error("Invalid message: %s", msg)
                     continue

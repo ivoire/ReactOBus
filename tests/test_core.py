@@ -38,11 +38,13 @@ def test_core(monkeypatch, tmpdir):
     pull = zmq_instance.socket(zmq.PULL)
     pub = zmq_instance.socket(zmq.PUB)
 
-    data = [[b"tests.1"],
-            [b"tests.2", "some data"],
-            [b"tests.3", "something", "else"],
-            [],
-            [b"tests.5"]]
+    data = [
+        [b"tests.1"],
+        [b"tests.2", "some data"],
+        [b"tests.3", "something", "else"],
+        [],
+        [b"tests.5"],
+    ]
     pull.recv.extend(data)
 
     # Start the proxy

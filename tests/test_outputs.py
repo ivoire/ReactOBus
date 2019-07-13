@@ -47,8 +47,10 @@ def test_zmq_class():
 def test_zmq_push(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils
+
     imp.reload(ReactOBus.utils)
     import ReactOBus.outputs
+
     imp.reload(ReactOBus.outputs)
     from ReactOBus.outputs import ZMQPush
 
@@ -66,9 +68,10 @@ def test_zmq_push(monkeypatch, tmpdir):
     sub = zmq_instance.socket(zmq.SUB)
 
     # send an invalid message then a valid one
-    data = [[b"test"],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"]]
+    data = [
+        [b"test"],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     sub.recv.extend(data)
 
     p = ZMQPush("push", {"url": url}, outbound)
@@ -87,8 +90,10 @@ def test_zmq_push(monkeypatch, tmpdir):
 def test_zmq_pub(monkeypatch, tmpdir):
     # Reload the base class "Pipe"
     import ReactOBus.utils
+
     imp.reload(ReactOBus.utils)
     import ReactOBus.outputs
+
     imp.reload(ReactOBus.outputs)
     from ReactOBus.outputs import ZMQPub
 
@@ -106,9 +111,10 @@ def test_zmq_pub(monkeypatch, tmpdir):
     sub = zmq_instance.socket(zmq.SUB)
 
     # send an invalid message then a valid one
-    data = [[b"test"],
-            [b"org.reactobus.test", b"uuid", b"2016-11-15",
-             b"testing", b"{}"]]
+    data = [
+        [b"test"],
+        [b"org.reactobus.test", b"uuid", b"2016-11-15", b"testing", b"{}"],
+    ]
     sub.recv.extend(data)
 
     p = ZMQPub("pub", {"url": url}, outbound)

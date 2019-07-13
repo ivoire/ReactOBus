@@ -46,10 +46,10 @@ class ZMQ(Output):
         self.outbound = outbound
 
         self.heartbeat = None
-        if 'heartbeat' in options:
+        if "heartbeat" in options:
             self.heartbeat = Namespace
-            self.heartbeat.timeout = options['heartbeat']['timeout']
-            self.heartbeat.topic = options['heartbeat']['topic']
+            self.heartbeat.timeout = options["heartbeat"]["timeout"]
+            self.heartbeat.topic = options["heartbeat"]["topic"]
 
     def secure_setup(self):
         raise NotImplementedError
@@ -81,10 +81,7 @@ class ZMQ(Output):
         if not self.pipeline:
             return False
         (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
-        variables = {"topic": topic,
-                     "uuid": uuid,
-                     "datetime": dt,
-                     "username": username}
+        variables = {"topic": topic, "uuid": uuid, "datetime": dt, "username": username}
         data_parsed = json.loads(data)
         return not all([p.match(variables, data_parsed) for p in self.pipeline])
 
@@ -117,8 +114,9 @@ class ZMQ(Output):
                 if interval >= self.heartbeat.timeout:
                     self.LOG.debug("Sending heartbeat")
                     last_heart_beat = now
-                    self.sock.send_multipart([b(self.heartbeat.topic),
-                                              b("%0.4f" % interval)])
+                    self.sock.send_multipart(
+                        [b(self.heartbeat.topic), b("%0.4f" % interval)]
+                    )
 
                 # Do we have to send a message
                 if sockets.get(self.sub) == zmq.POLLIN:
@@ -127,7 +125,6 @@ class ZMQ(Output):
                         continue
                     self.LOG.debug(msg)
                     self.sock.send_multipart(msg)
-
 
 
 class ZMQPub(ZMQ):
@@ -145,14 +142,13 @@ class ZMQPub(ZMQ):
         self.LOG.debug("Server keys in %s", self.secure_config["self"])
         sock_pub, sock_priv = load_certificate(self.secure_config["self"])
         if self.secure_config.get("clients", None) is not None:
-            self.LOG.debug("Client certificates in %s",
-                           self.secure_config["clients"])
-            self.auth.configure_curve(domain='*',
-                                      location=self.secure_config["clients"])
+            self.LOG.debug("Client certificates in %s", self.secure_config["clients"])
+            self.auth.configure_curve(
+                domain="*", location=self.secure_config["clients"]
+            )
         else:
             self.LOG.debug("Every clients can connect")
-            self.auth.configure_curve(domain='*',
-                                      location=zmq.auth.CURVE_ALLOW_ANY)
+            self.auth.configure_curve(domain="*", location=zmq.auth.CURVE_ALLOW_ANY)
 
         # Setup the socket
         self.sock.curve_publickey = sock_pub

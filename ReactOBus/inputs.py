@@ -85,12 +85,16 @@ class ZMQ(Input):
                 (topic, uuid, dt, username, data) = (u(m) for m in msg[:])
                 self.LOG.debug("topic: %s, data: %s", topic, data)
                 if self.pipeline:
-                    variables = {"topic": topic,
-                                 "uuid": uuid,
-                                 "datetime": dt,
-                                 "username": username}
+                    variables = {
+                        "topic": topic,
+                        "uuid": uuid,
+                        "datetime": dt,
+                        "username": username,
+                    }
                     data_parsed = json.loads(data)
-                    if not all([p.match(variables, data_parsed) for p in self.pipeline]):
+                    if not all(
+                        [p.match(variables, data_parsed) for p in self.pipeline]
+                    ):
                         self.LOG.debug("Filtering-out the message")
                         continue
             except ValueError:
@@ -115,14 +119,13 @@ class ZMQPull(ZMQ):
         self.LOG.debug("Server keys in %s", self.secure_config["self"])
         sock_pub, sock_priv = load_certificate(self.secure_config["self"])
         if self.secure_config.get("clients", None) is not None:
-            self.LOG.debug("Client certificates in %s",
-                           self.secure_config["clients"])
-            self.auth.configure_curve(domain='*',
-                                      location=self.secure_config["clients"])
+            self.LOG.debug("Client certificates in %s", self.secure_config["clients"])
+            self.auth.configure_curve(
+                domain="*", location=self.secure_config["clients"]
+            )
         else:
             self.LOG.debug("Every clients can connect")
-            self.auth.configure_curve(domain='*',
-                                      location=zmq.auth.CURVE_ALLOW_ANY)
+            self.auth.configure_curve(domain="*", location=zmq.auth.CURVE_ALLOW_ANY)
 
         # Setup the socket
         self.sock.curve_publickey = sock_pub

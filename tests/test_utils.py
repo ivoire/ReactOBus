@@ -34,14 +34,14 @@ class PipeSubTest(PipeTest):
 
 
 def test_pipe():
-    p = Pipe.select("PipeTest", "testing", {}, '')
+    p = Pipe.select("PipeTest", "testing", {}, "")
     assert isinstance(p, PipeTest)
 
-    p = Pipe.select("PipeSubTest", "testing", {}, '')
+    p = Pipe.select("PipeSubTest", "testing", {}, "")
     assert isinstance(p, PipeSubTest)
 
     with pytest.raises(NotImplementedError):
-        Pipe.select("TestClass", "test", {}, '')
+        Pipe.select("TestClass", "test", {}, "")
 
     p = Pipe()
     with pytest.raises(NotImplementedError):
@@ -52,27 +52,28 @@ def test_pipe():
 
 def test_lookup():
     assert lookup("username", {"username": "kernel"}, {}) == "kernel"
-    assert lookup("msg",
-                  {"username": "kernel",
-                   "msg": "hello"}, {}) == "hello"
+    assert lookup("msg", {"username": "kernel", "msg": "hello"}, {}) == "hello"
 
     # $data
     assert lookup("data", {"msg": "something"}, {}) == "{}"
     assert lookup("data", {"msg": "something"}, "just a string") == "just a string"
-    assert lookup("data", {"msg": "something"},
-                  {"hello": "world"}) == '{"hello": "world"}'
-    assert lookup("data", {"msg": "something"},
-                  ["hello", "world"]) == '["hello", "world"]'
+    assert (
+        lookup("data", {"msg": "something"}, {"hello": "world"}) == '{"hello": "world"}'
+    )
+    assert (
+        lookup("data", {"msg": "something"}, ["hello", "world"]) == '["hello", "world"]'
+    )
 
     # $data.key
-    assert lookup("data.key", {"msg": "something"},
-                  {"key": "value"}) == "value"
-    assert lookup("data.hello", {"msg": "something"},
-                  {"hello": "world"}) == "world"
-    assert lookup("data.hello", {"msg": "something"},
-                  {"hello": []}) == "[]"
-    assert lookup("data.hello", {"msg": "something"},
-                          {"hello": [{"world": 1}, {"wordl": 2}]}) == '[{"world": 1}, {"wordl": 2}]'
+    assert lookup("data.key", {"msg": "something"}, {"key": "value"}) == "value"
+    assert lookup("data.hello", {"msg": "something"}, {"hello": "world"}) == "world"
+    assert lookup("data.hello", {"msg": "something"}, {"hello": []}) == "[]"
+    assert (
+        lookup(
+            "data.hello", {"msg": "something"}, {"hello": [{"world": 1}, {"wordl": 2}]}
+        )
+        == '[{"world": 1}, {"wordl": 2}]'
+    )
 
     with pytest.raises(KeyError):
         lookup("msg", {}, {})

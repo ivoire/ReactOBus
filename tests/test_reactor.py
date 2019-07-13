@@ -37,14 +37,12 @@ def test_reactor(monkeypatch):
     zmq_instance = mock.ZMQContextInstance()
     monkeypatch.setattr(zmq.Context, "instance", zmq_instance)
     import ReactOBus.reactor
+
     monkeypatch.setattr(ReactOBus.reactor, "Worker", MockWorker)
 
     from ReactOBus.reactor import Reactor
 
-    options = {
-        "rules": {},
-        "workers": 0
-    }
+    options = {"rules": {}, "workers": 0}
     r = Reactor(options, "inproc://test")
     with pytest.raises(IndexError):
         r.run()
@@ -53,21 +51,25 @@ def test_reactor(monkeypatch):
 
     assert sub.connected and not sub.bound
     assert sub.url == "inproc://test"
-    assert sub.opts == {zmq.SUBSCRIBE: b''}
+    assert sub.opts == {zmq.SUBSCRIBE: b""}
 
     assert dealer.bound and not dealer.connected
     assert dealer.url == "inproc://workers"
     assert dealer.recv == []
 
     options = {
-        "rules": [{"name": "first test",
-                   "match": {"field": "topic",
-                             "patterns": "^org.reactobus.lava"},
-                   "exec": {"path": "/bin/true",
-                            "args": ["topic", "$topic", "username",
-                                     "$username"],
-                            "timeout": 1}}],
-        "workers": 2
+        "rules": [
+            {
+                "name": "first test",
+                "match": {"field": "topic", "patterns": "^org.reactobus.lava"},
+                "exec": {
+                    "path": "/bin/true",
+                    "args": ["topic", "$topic", "username", "$username"],
+                    "timeout": 1,
+                },
+            }
+        ],
+        "workers": 2,
     }
     r = Reactor(options, "inproc://test")
     sub.recv = [
@@ -86,22 +88,29 @@ def test_reactor(monkeypatch):
     assert r.workers[0].started
     assert r.workers[1].started
     assert sub.recv == []
-    assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
-                            b"2016", b"lavauser", b"{}"],
-                           [b"0", b"org.reactobus.lava", b"uuid2",
-                            b"2016", b"lavauser", b"{}"]]
+    assert dealer.send == [
+        [b"0", b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"0", b"org.reactobus.lava", b"uuid2", b"2016", b"lavauser", b"{}"],
+    ]
 
     dealer.send = []
     r = Reactor(options, "inproc://test")
     options = {
-        "rules": [{"name": "first test",
-                   "match": {"field": "topic",
-                             "patterns": ["^org.reactobus.lava", "^org.linaro.validation"]},
-                   "exec": {"path": "/bin/true",
-                            "args": ["topic", "$topic", "username",
-                                     "$username"],
-                            "timeout": 1}}],
-        "workers": 2
+        "rules": [
+            {
+                "name": "first test",
+                "match": {
+                    "field": "topic",
+                    "patterns": ["^org.reactobus.lava", "^org.linaro.validation"],
+                },
+                "exec": {
+                    "path": "/bin/true",
+                    "args": ["topic", "$topic", "username", "$username"],
+                    "timeout": 1,
+                },
+            }
+        ],
+        "workers": 2,
     }
     r = Reactor(options, "inproc://test")
     sub.recv = [
@@ -119,9 +128,8 @@ def test_reactor(monkeypatch):
     assert r.workers[0].started
     assert r.workers[1].started
     assert sub.recv == []
-    assert dealer.send == [[b"0", b"org.reactobus.lava", b"uuid",
-                            b"2016", b"lavauser", b"{}"],
-                           [b"0", b"org.linaro.validation", b"uuid2",
-                            b"2016", b"lavauser", b"{}"],
-                           [b"0", b"org.reactobus.lava", b"uuid3",
-                            b"2016", b"lavauser", b"{}"]]
+    assert dealer.send == [
+        [b"0", b"org.reactobus.lava", b"uuid", b"2016", b"lavauser", b"{}"],
+        [b"0", b"org.linaro.validation", b"uuid2", b"2016", b"lavauser", b"{}"],
+        [b"0", b"org.reactobus.lava", b"uuid3", b"2016", b"lavauser", b"{}"],
+    ]

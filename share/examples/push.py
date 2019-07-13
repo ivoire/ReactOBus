@@ -8,6 +8,7 @@ import zmq
 import zmq.auth
 from zmq.utils.strtypes import b
 
+
 def main():
     # Get the arguments
     if len(sys.argv) != 4 and len(sys.argv) != 6:
@@ -35,11 +36,15 @@ def main():
     sock.connect(url)
 
     for i in range(0, num_messages):
-        sock.send_multipart([b(topic),
-                             b(str(uuid.uuid1())),
-                             b(datetime.datetime.utcnow().isoformat()),
-                             b(username),
-                             b(json.dumps({'id': i}))])
+        sock.send_multipart(
+            [
+                b(topic),
+                b(str(uuid.uuid1())),
+                b(datetime.datetime.utcnow().isoformat()),
+                b(username),
+                b(json.dumps({"id": i})),
+            ]
+        )
 
 
 if __name__ == "__main__":

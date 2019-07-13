@@ -55,10 +55,17 @@ def test_worker(monkeypatch):
     assert dealer.connected and not dealer.bound
 
     # Create some work
-    data = [[b"0", b"org.reactobus.test", b"azertyuiop", b"2024",
-             b"user", b"{}"],
-            [b"2", b"org.reactobus.ci", b"qwertyuiop", b"1789", b"bla",
-             b"{\"hello\": \"world\"}"]]
+    data = [
+        [b"0", b"org.reactobus.test", b"azertyuiop", b"2024", b"user", b"{}"],
+        [
+            b"2",
+            b"org.reactobus.ci",
+            b"qwertyuiop",
+            b"1789",
+            b"bla",
+            b'{"hello": "world"}',
+        ],
+    ]
     dealer.recv = data
 
     with pytest.raises(IndexError):
@@ -83,9 +90,11 @@ def test_worker(monkeypatch):
     matchers = [DummyMatcher(), DummyMatcher(), DummyMatcher()]
     w = Worker(matchers)
 
-    data = [[b"a", b"org.reactobus.test", b"", b"", b"", b"{}"],
-            [b"2", b"org.reactobus.test", b"", b"", b""],
-            [b"42", b"org.reactobus.test", b"", b"", b"", b"{}"]]
+    data = [
+        [b"a", b"org.reactobus.test", b"", b"", b"", b"{}"],
+        [b"2", b"org.reactobus.test", b"", b"", b""],
+        [b"42", b"org.reactobus.test", b"", b"", b"", b"{}"],
+    ]
     dealer.recv = data
     with pytest.raises(IndexError):
         w.run()
@@ -118,25 +127,33 @@ def test_worker_and_matchers(monkeypatch):
 
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
 
-    rule_1 = {"name": "first test",
-              "match": {"field": "topic",
-                        "patterns": "^org.reactobus.lava"},
-              "exec": {"path": "/bin/true",
-                       "args": ["topic", "$topic", "username", "$username"],
-                       "timeout": 1}}
-    rule_2 = {"name": "second test",
-              "match": {"field": "username",
-                        "patterns": ".*kernel.*"},
-              "exec": {"path": "/bin/true",
-                       "args": ["topic", "$topic", "username", "$username"],
-                       "timeout": 1}}
-    rule_3 = {"name": "data matching",
-              "match": {"field": "data.submitter",
-                        "patterns": "kernel-ci"},
-              "exec": {"path": "/bin/true",
-                       "args": ["topic", "$topic", "submitter",
-                                "$data.submitter"],
-                       "timeout": 1}}
+    rule_1 = {
+        "name": "first test",
+        "match": {"field": "topic", "patterns": "^org.reactobus.lava"},
+        "exec": {
+            "path": "/bin/true",
+            "args": ["topic", "$topic", "username", "$username"],
+            "timeout": 1,
+        },
+    }
+    rule_2 = {
+        "name": "second test",
+        "match": {"field": "username", "patterns": ".*kernel.*"},
+        "exec": {
+            "path": "/bin/true",
+            "args": ["topic", "$topic", "username", "$username"],
+            "timeout": 1,
+        },
+    }
+    rule_3 = {
+        "name": "data matching",
+        "match": {"field": "data.submitter", "patterns": "kernel-ci"},
+        "exec": {
+            "path": "/bin/true",
+            "args": ["topic", "$topic", "submitter", "$data.submitter"],
+            "timeout": 1,
+        },
+    }
 
     # Create the matchers
     matchers = [Matcher(rule_1), Matcher(rule_2), Matcher(rule_3)]
@@ -156,8 +173,13 @@ def test_worker_and_matchers(monkeypatch):
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == [b"/bin/true", b"topic", b"org.reactobus.lava",
-                      b"username", b"lavauser"]
+    assert m_args == [
+        b"/bin/true",
+        b"topic",
+        b"org.reactobus.lava",
+        b"username",
+        b"lavauser",
+    ]
 
     # Create some work for rule_2
     data = [[b"1", b"org.kernel.git", b"", b"", b"kernelci", b"{}"]]
@@ -166,24 +188,50 @@ def test_worker_and_matchers(monkeypatch):
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == [b"/bin/true", b"topic", b"org.kernel.git",
-                      b"username", b"kernelci"]
+    assert m_args == [
+        b"/bin/true",
+        b"topic",
+        b"org.kernel.git",
+        b"username",
+        b"kernelci",
+    ]
 
     # Create some work for rule_3
-    data = [[b"2", b"org.linaro.validation", b"", b"", b"lavauser",
-             b"{\"submitter\": \"kernel-ci\"}"]]
+    data = [
+        [
+            b"2",
+            b"org.linaro.validation",
+            b"",
+            b"",
+            b"lavauser",
+            b'{"submitter": "kernel-ci"}',
+        ]
+    ]
     dealer.recv = data
 
     with pytest.raises(IndexError):
         w.run()
 
-    assert m_args == [b"/bin/true", b"topic", b"org.linaro.validation",
-                      b"submitter", b"kernel-ci"]
+    assert m_args == [
+        b"/bin/true",
+        b"topic",
+        b"org.linaro.validation",
+        b"submitter",
+        b"kernel-ci",
+    ]
 
     m_args = []
     # Create some invalid work for rule_3
-    data = [[b"2", b"org.linaro.validation", b"", b"", b"lavauser",
-             b"{\"submitter: \"kernel-ci\"}"]]
+    data = [
+        [
+            b"2",
+            b"org.linaro.validation",
+            b"",
+            b"",
+            b"lavauser",
+            b'{"submitter: "kernel-ci"}',
+        ]
+    ]
     dealer.recv = data
 
     with pytest.raises(IndexError):
