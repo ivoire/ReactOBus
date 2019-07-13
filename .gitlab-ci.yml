@@ -1,5 +1,6 @@
 stages:
 - test
+- analyze
 
 ########
 # Test #
@@ -33,3 +34,26 @@ test-ubuntu-19.04:
   <<: *test
   image: ubuntu:19.04
 
+###########
+# Analyze #
+###########
+black:
+  stage: analyze
+  image: debian:buster
+  tags: [amd64]
+  before_script:
+  - apt-get update -qq
+  - apt-get install --no-install-recommends -y python3-pip python3-setuptools
+  - pip3 install black
+  script:
+  - LC_ALL=C.UTF-8 LANG=C.UTF-8 black --check .
+
+# static analysis with bandit
+include:
+  template: SAST.gitlab-ci.yml
+sast:
+  tags: [amd64-dind]
+  stage: analyze
+  variables:
+    DOCKER_DRIVER: overlay2
+    SAST_DEFAULT_ANALYZERS: "bandit"
