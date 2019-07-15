@@ -43,5 +43,5 @@ __author__ = "Rémi Duraffort"
 __author_email__ = "remi.duraffort@linaro.org"
 __description__ = "A message broker to create software bus over the network"
 __license__ = "AGPLv3+"
-__url__ = "https://git.lavasoftware.org/lava/ReactOBus"
+__url__ = "https://git.lavasoftware.org/ReactOBus/ReactOBus"
 __version__ = git_describe()

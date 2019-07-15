@@ -35,9 +35,9 @@ setup(
     license=metadata["__license__"],
     url=metadata["__url__"],
     project_urls={
-        "Bug Tracker": "https://git.lavasoftware.org/lava/ReactOBus/issues/",
-        "Documentation": "https://docs.lavasoftware.org/ReactOBus/",
-        "Source Code": "https://git.lavasoftware.org/lava/ReactOBus/",
+        "Bug Tracker": "https://git.lavasoftware.org/ReactOBus/ReactOBus/issues/",
+        "Documentation": "https://git.lavasoftware.org/ReactOBus/ReactOBus/",
+        "Source Code": "https://git.lavasoftware.org/ReactOBus/ReactOBus/",
     },
     python_requires=">=3.4",
     classifiers=[
