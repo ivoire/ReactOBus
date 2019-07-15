@@ -1,6 +1,7 @@
 stages:
 - test
 - analyze
+- build
 
 ########
 # Test #
@@ -57,3 +58,17 @@ sast:
   variables:
     DOCKER_DRIVER: overlay2
     SAST_DEFAULT_ANALYZERS: "bandit"
+
+#########
+# Build #
+#########
+docker:
+  image: docker:stable
+  tags: [amd64-dind]
+  stage: build
+  variables:
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:stable-dind
+  script:
+  - docker build .
