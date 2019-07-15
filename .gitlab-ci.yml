@@ -3,10 +3,37 @@ stages:
 - analyze
 - build
 
+###########################
+# Templates               #
+#                         #
+# make sure all jobs use  #
+# architecture tags.      #
+###########################
+.job: &job
+  before_script:
+  - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
+  dependencies: []
+  except: [schedules]
+  tags:
+  - amd64
+  script:
+  - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
+
+.dind: &dind
+  <<: *job
+  tags:
+  - amd64-dind
+  image: docker:stable
+  variables:
+    DOCKER_DRIVER: overlay2
+  services:
+  - docker:stable-dind
+
 ########
 # Test #
 ########
 .test: &test
+  <<: *job
   stage: test
   tags: [amd64]
   before_script:
@@ -39,15 +66,9 @@ test-ubuntu-19.04:
 # Analyze #
 ###########
 black:
+  <<: *job
   stage: analyze
-  image: debian:buster
-  tags: [amd64]
-  before_script:
-  - apt-get update -qq
-  - apt-get install --no-install-recommends -y python3-pip python3-setuptools
-  - pip3 install black
-  script:
-  - LC_ALL=C.UTF-8 LANG=C.UTF-8 black --check .
+  image: hub.lavasoftware.org/lava/ci-images/amd64/analyze
 
 # static analysis with bandit
 include:
@@ -63,12 +84,5 @@ sast:
 # Build #
 #########
 docker:
-  image: docker:stable
-  tags: [amd64-dind]
+  <<: *dind
   stage: build
-  variables:
-    DOCKER_DRIVER: overlay2
-  services:
-    - docker:stable-dind
-  script:
-  - docker build .
