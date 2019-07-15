@@ -59,7 +59,7 @@ def configure_pipeline(conffile):
 
     LOG.info("Creating the pipeline")
     with open(conffile, encoding="utf-8") as f_in:
-        conf = yaml.load(f_in)
+        conf = yaml.safe_load(f_in)
 
     # Parse inputs
     LOG.debug("Inputs:")
