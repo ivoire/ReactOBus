@@ -1,7 +1,5 @@
-[![Build Status](https://travis-ci.org/ivoire/ReactOBus.svg?branch=master)](https://travis-ci.org/ivoire/ReactOBus) [![Coverage Status](https://coveralls.io/repos/github/ivoire/ReactOBus/badge.svg?branch=master)](https://coveralls.io/github/ivoire/ReactOBus?branch=master) [![Code Health](https://landscape.io/github/ivoire/ReactOBus/master/landscape.svg?style=flat)](https://landscape.io/github/ivoire/ReactOBus/master)
-
 ReactOBus
-========
+=========
 
 ReactOBus is a message broker that helps to create software bus over the network
 and to react to some messages.
@@ -56,9 +54,9 @@ afterward or ask pip to include the right ReactOBus variant with:
 
 It's also possible to execute ReactOBus directly from the sources:
 
-    git clone https://github.com/ivoire/ReactOBus.git
+    git clone https://git.lavasoftware.org/ReactOBus/ReactOBus
     cd ReactOBus
-    virtualenv -p python3.5 venv
+    virtualenv -p python3 venv
     source venv/bin/activate
     pip install -r requirements.txt
     python reactobus --level DEBUG --conf share/examples/reactobus.yaml
@@ -107,9 +105,3 @@ Then run the tests using:
     tests/test_db.py::test_run PASSED
     tests/test_db.py::test_errors PASSED
     [...]
-
-On each push, the tests and the coverage are computed on:
-
-* [Test results](https://travis-ci.org/ivoire/ReactOBus)
-* [Coverage report](https://coveralls.io/github/ivoire/ReactOBus)
-* [Static analysis](https://landscape.io/github/ivoire/ReactOBus)
