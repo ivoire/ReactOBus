@@ -84,7 +84,8 @@ sast:
 #########
 # Build #
 #########
-docker:  <<: *dind
+docker:
+  <<: *dind
   stage: build
 
 ##########
