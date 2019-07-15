@@ -2,6 +2,7 @@ stages:
 - test
 - analyze
 - build
+- deploy
 
 ###########################
 # Templates               #
@@ -83,6 +84,20 @@ sast:
 #########
 # Build #
 #########
-docker:
-  <<: *dind
+docker:  <<: *dind
   stage: build
+
+##########
+# Deploy #
+##########
+reactobus:
+  <<: *job
+  stage: deploy
+  tags: [deploy]
+  only:
+    refs:
+    - master
+  variables:
+    CONTAINER_NAME: "reactobus"
+  environment:
+    name: reactobus
