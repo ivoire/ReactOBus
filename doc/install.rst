@@ -28,9 +28,9 @@ It's also possible to execute ReactOBus directly from the sources:
 
 .. code-block:: shell
 
-    git clone https://github.com/ivoire/ReactOBus.git
+    git clone https://git.lavasoftware.org/ReactOBus/ReactOBus
     cd ReactOBus
-    virtualenv -p python3.5 venv
+    virtualenv -p python3 venv
     source venv/bin/activate
     pip install -r requirements.txt
     python reactobus --level DEBUG --conf share/examples/reactobus.yaml
