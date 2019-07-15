@@ -13,7 +13,7 @@ else
   # Patch the version on the fly
   VERSION=$(git describe)
   sed -i "s#^__version__ = .*\$##" reactobus/__about__.py
-  echo "__version__ = $VERSION" >> reactobus/__about__.py
+  echo "__version__ = \"$VERSION\"" >> reactobus/__about__.py
 
   # Build the docker image
   docker build -t $CI_REGISTRY_IMAGE:latest .
