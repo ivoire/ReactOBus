@@ -66,10 +66,19 @@ test-ubuntu-19.04:
 ###########
 # Analyze #
 ###########
-black:
+.analyze: &analyze
   <<: *job
-  stage: analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/analyze
+  stage: analyze
+  except:
+    refs:
+    - tags
+
+black:
+  <<: *analyze
+
+pylint:
+  <<: *analyze
 
 # static analysis with bandit
 include:
