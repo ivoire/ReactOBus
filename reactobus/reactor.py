@@ -32,7 +32,7 @@ from .utils import lookup
 LOG = logging.getLogger("ROB.reactor")
 
 
-class Matcher(object):
+class Matcher:
     def __init__(self, rule):
         self.name = rule["name"]
         self.field = rule["match"]["field"]

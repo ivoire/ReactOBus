@@ -22,7 +22,7 @@ import re
 from .utils import lookup
 
 
-class Filter(object):
+class Filter:
     def __init__(self, field, pattern):
         self.field = field
         self.pattern = re.compile(pattern)
